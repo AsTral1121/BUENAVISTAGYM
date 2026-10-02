@@ -1,0 +1,3236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Gimnasio - BuenavistaGYM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gym: {
+                            primary: '#1f2937',
+                            secondary: '#3b82f6',
+                            accent: '#10b981',
+                            danger: '#ef4444'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .slide-in {
+            animation: slideIn 0.4s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+
+        #memberPhotoPreview {
+            transition: all 0.3s ease;
+        }
+        #memberPhotoPreview:hover {
+            opacity: 0.8;
+        }
+
+        #credentialPreview {
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+        }
+
+        #credentialQrCode canvas {
+            border: 1px solid #e5e7eb;
+            padding: 4px;
+            background: white;
+        }
+
+        .member-checkbox:checked {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+
+        #bulkDeleteBtn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .payment-checkbox:checked {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+
+        #bulkDeletePaymentsBtn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #salesSummary {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-left: 4px solid #3b82f6;
+        }
+
+        #exportVisibleSalesPDFBtn, #exportAllSalesPDFBtn {
+            transition: all 0.2s ease;
+        }
+
+        #exportVisibleSalesPDFBtn:hover, #exportAllSalesPDFBtn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        #settings .bg-white {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        #settings .bg-white:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        #resetSystemBtn {
+            transition: all 0.3s ease;
+        }
+
+        #resetSystemBtn:hover {
+            transform: scale(1.05);
+        }
+
+        #confirmResetCheckbox:checked {
+            background-color: #ef4444;
+            border-color: #ef4444;
+        }
+
+        /* Animación para el modal de éxito */
+        @keyframes bounce-in {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-bounce-in {
+            animation: bounce-in 0.5s ease-out;
+        }
+
+        /* Estilos para el cambio */
+        #changeAmount.positive {
+            color: #10b981;
+        }
+        #changeAmount.negative {
+            color: #ef4444;
+        }
+        #changeAmount.zero {
+            color: #9ca3af;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-gym-primary text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <h1 class="text-2xl font-bold flex items-center">
+                    <span class="mr-2">💪</span>
+                    BUENAVISTA GYM - SISTEMA DE GIMNASIO
+                </h1>
+                <div class="flex items-center space-x-4">
+                    <div class="text-sm">
+                        <span class="opacity-75">Moneda:</span>
+                        <select id="currencySelect" class="ml-2 bg-gym-secondary text-white px-2 py-1 rounded">
+                            <option value="MXN">MXN ($)</option>
+                            <option value="USD">USD ($)</option>
+                            <option value="EUR">EUR (€)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md border-b">
+        <div class="container mx-auto px-4">
+            <div class="flex space-x-8">
+                <button class="nav-btn active py-4 px-2 border-b-2 border-gym-secondary text-gym-secondary font-medium" data-section="dashboard">
+                    Panel Principal
+                </button>
+                <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gym-secondary" data-section="members">
+                    Socios
+                </button>
+                <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gym-secondary" data-section="payments">
+                    Pagos
+                </button>
+                <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gym-secondary" data-section="history">
+                    Historial
+                </button>
+                <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gym-secondary" data-section="pos">
+                    Punto de Venta
+                </button>
+                <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gym-secondary" data-section="settings">
+                    Configuración
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="section fade-in">
+            <h2 class="text-3xl font-bold text-gym-primary mb-8">Panel Principal</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-gym-accent">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-gym-accent bg-opacity-10">
+                            <span class="text-2xl">👥</span>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-sm font-medium text-gray-500">Total Socios</h3>
+                            <p class="text-2xl font-bold text-gray-900" id="totalMembers">0</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-green-100">
+                            <span class="text-2xl">✅</span>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-sm font-medium text-gray-500">Socios Activos</h3>
+                            <p class="text-2xl font-bold text-green-600" id="activeMembers">0</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-red-100">
+                            <span class="text-2xl">❌</span>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-sm font-medium text-gray-500">Socios Inactivos</h3>
+                            <p class="text-2xl font-bold text-red-600" id="inactiveMembers">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-xl font-semibold text-gym-primary mb-4">Actividad Reciente</h3>
+                <div id="recentActivity" class="space-y-3">
+                    <p class="text-gray-500 text-center py-8">No hay actividad reciente</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Members Section -->
+        <section id="members" class="section hidden">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-bold text-gym-primary">Gestión de Socios</h2>
+                <div class="flex space-x-2">
+                    <button id="exportExcelBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200">
+                        Exportar Excel
+                    </button>
+                    <button id="exportPDFBtn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition duration-200">
+                        Exportar PDF
+                    </button>
+                    <button id="importExcelBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200">
+                        Importar Excel
+                    </button>
+                    <button id="bulkDeleteBtn" class="bg-red-700 text-white px-4 py-2 rounded-lg hover:bg-red-800 transition duration-200 opacity-50 cursor-not-allowed" disabled>
+                        Eliminar Masivamente
+                    </button>
+                    <button id="addMemberBtn" class="bg-gym-secondary text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition duration-200">
+                        + Nuevo Socio
+                    </button>
+                </div>
+            </div>
+
+            <input type="file" id="excelImportInput" accept=".xlsx, .xls" class="hidden">
+
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
+                        <input type="text" id="searchMembers" placeholder="Nombre, correo o teléfono" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                        <select id="statusFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                            <option value="">Todos</option>
+                            <option value="active">Activos</option>
+                            <option value="inactive">Inactivos</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Ciudad</label>
+                        <select id="cityFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button id="clearFilters" class="w-full bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition duration-200">
+                            Limpiar Filtros
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <input type="checkbox" id="selectAllMembers" class="rounded text-gym-secondary">
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Socio</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contacto</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Membresía</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="membersTable" class="bg-white divide-y divide-gray-200">
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Payments Section -->
+        <section id="payments" class="section hidden">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-bold text-gym-primary">Gestión de Pagos</h2>
+                <div class="flex space-x-2">
+                    <button id="exportPaymentsPDFBtn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition duration-200">
+                        Exportar PDF
+                    </button>
+                    <button id="bulkDeletePaymentsBtn" class="bg-red-700 text-white px-4 py-2 rounded-lg hover:bg-red-800 transition duration-200 opacity-50 cursor-not-allowed" disabled>
+                        Eliminar Pagos
+                    </button>
+                    <button id="addPaymentBtn" class="bg-gym-secondary text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition duration-200">
+                        + Registrar Pago
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold text-gym-primary mb-2">Plan Diario</h3>
+                    <div class="flex items-center justify-between">
+                        <span class="text-2xl font-bold text-gym-accent" id="dailyPrice">$50</span>
+                        <button class="text-gym-secondary hover:text-blue-600" onclick="editPrice('daily')">✏️</button>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold text-gym-primary mb-2">Plan Semanal</h3>
+                    <div class="flex items-center justify-between">
+                        <span class="text-2xl font-bold text-gym-accent" id="weeklyPrice">$300</span>
+                        <button class="text-gym-secondary hover:text-blue-600" onclick="editPrice('weekly')">✏️</button>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold text-gym-primary mb-2">Plan Quincenal</h3>
+                    <div class="flex items-center justify-between">
+                        <span class="text-2xl font-bold text-gym-accent" id="biweeklyPrice">$550</span>
+                        <button class="text-gym-secondary hover:text-blue-600" onclick="editPrice('biweekly')">✏️</button>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold text-gym-primary mb-2">Plan Mensual</h3>
+                    <div class="flex items-center justify-between">
+                        <span class="text-2xl font-bold text-gym-accent" id="monthlyPrice">$1000</span>
+                        <button class="text-gym-secondary hover:text-blue-600" onclick="editPrice('monthly')">✏️</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Fecha Desde</label>
+                        <input type="date" id="paymentDateFromFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Fecha Hasta</label>
+                        <input type="date" id="paymentDateToFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                    </div>
+                    <div class="flex items-end">
+                        <button id="clearPaymentFilters" class="w-full bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition duration-200">
+                            Limpiar Filtros
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-gym-primary">Pagos Recientes</h3>
+                    <span id="selectedPaymentsCount" class="text-sm text-gray-500 hidden"></span>
+                </div>
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <input type="checkbox" id="selectAllPayments" class="rounded text-gym-secondary">
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Socio</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Monto</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paymentsTable" class="bg-white divide-y divide-gray-200">
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- History Section -->
+        <section id="history" class="section hidden">
+            <h2 class="text-3xl font-bold text-gym-primary mb-8">Historial de Actividad</h2>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Actividad</label>
+                        <select id="activityTypeFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                            <option value="">Todas</option>
+                            <option value="member_added">Socio Agregado</option>
+                            <option value="member_updated">Socio Actualizado</option>
+                            <option value="member_deleted">Socio Eliminado</option>
+                            <option value="payment_added">Pago Registrado</option>
+                            <option value="price_updated">Precio Actualizado</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Fecha Desde</label>
+                        <input type="date" id="dateFromFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Fecha Hasta</label>
+                        <input type="date" id="dateToFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gym-primary">Actividades</h3>
+                </div>
+                <div id="activityList" class="divide-y divide-gray-200">
+                </div>
+            </div>
+        </section>
+
+        <!-- POS Section -->
+        <section id="pos" class="section hidden">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-bold text-gym-primary">Punto de Venta</h2>
+                <div class="flex space-x-2">
+                    <button id="addProductBtn" class="bg-gym-accent text-white px-4 py-2 rounded-lg hover:bg-green-600 transition duration-200">
+                        + Producto
+                    </button>
+                    <button id="exportSalesPDFBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200">
+                        Exportar PDF
+                    </button>
+                    <button id="viewSalesBtn" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition duration-200">
+                        Historial Ventas
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Panel de Productos -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div class="md:col-span-2">
+                                <input type="text" id="productSearch" placeholder="Buscar productos..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                            </div>
+                            <div>
+                                <select id="productCategoryFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                                    <option value="">Todas las categorías</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="productsGrid">
+                            <!-- Productos se cargarán aquí -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel de Venta -->
+                <div>
+                    <div class="bg-white rounded-lg shadow-md p-6 sticky top-4">
+                        <h3 class="text-xl font-semibold text-gym-primary mb-4">Venta Actual</h3>
+                        
+                        <div class="space-y-3 mb-4 max-h-64 overflow-y-auto" id="cartItems">
+                            <p class="text-gray-500 text-center py-4">No hay productos agregados</p>
+                        </div>
+                        
+                        <div class="border-t border-gray-200 pt-4 mb-4">
+                            <div class="flex justify-between mb-2">
+                                <span class="font-medium">Subtotal:</span>
+                                <span id="cartSubtotal">$0.00</span>
+                            </div>
+                           
+                            <div class="flex justify-between text-lg font-bold">
+                                <span>Total:</span>
+                                <span id="cartTotal">$0.00</span>
+                            </div>
+                        </div>
+
+                        <!-- Campo de efectivo recibido y cambio -->
+                        <div class="border-t border-gray-200 pt-4 mb-4">
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Efectivo Recibido:</label>
+                                <input type="number" id="cashReceived" min="0" step="0.01" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary text-lg font-bold"
+                                       placeholder="0.00">
+                            </div>
+                            <div class="flex justify-between text-lg font-bold">
+                                <span>Cambio:</span>
+                                <span id="changeAmount" class="text-gray-400">$0.00</span>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-2 mb-4">
+                            <button id="clearCartBtn" class="bg-gray-500 text-white py-2 rounded hover:bg-gray-600 transition duration-200">
+                                Limpiar
+                            </button>
+                            <button id="checkoutBtn" class="bg-gym-secondary text-white py-2 rounded hover:bg-blue-600 transition duration-200">
+                                Cobrar ($)
+                            </button>
+                        </div>
+                        
+                        <div class="border-t border-gray-200 pt-4">
+                            <h4 class="font-medium mb-2">Método de Pago</h4>
+                            <div class="grid grid-cols-3 gap-2">
+                                <button class="payment-method bg-green-100 text-green-800 py-2 rounded ring-2 ring-gym-secondary" data-method="efectivo">
+                                    Efectivo
+                                </button>
+                                <button class="payment-method bg-blue-100 text-blue-800 py-2 rounded" data-method="tarjeta">
+                                    Tarjeta
+                                </button>
+                                <button class="payment-method bg-purple-100 text-purple-800 py-2 rounded" data-method="transferencia">
+                                    Transferencia
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section id="settings" class="section hidden">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-bold text-gym-primary">Configuración del Sistema</h2>
+                <div class="flex space-x-2">
+                    <button id="exportAllDataPDFBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200">
+                        Exportar Todo en PDF
+                    </button>
+                    <button id="resetSystemBtn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition duration-200">
+                        Reiniciar Sistema
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="text-xl font-semibold text-gym-primary mb-4">Información del Sistema</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <span class="font-medium">Versión del Sistema:</span>
+                        <span class="ml-2" id="systemVersion">N.O.V.A v2.0</span>
+                    </div>
+                    <div>
+                        <span class="font-medium">Última Actualización:</span>
+                        <span class="ml-2" id="lastUpdate">15/03/2024</span>
+                    </div>
+                    <div>
+                        <span class="font-medium">Total de Datos Almacenados:</span>
+                        <span class="ml-2" id="totalDataSize">Calculando...</span>
+                    </div>
+                    <div>
+                        <span class="font-medium">Moneda Actual:</span>
+                        <span class="ml-2" id="currentCurrencyDisplay">MXN ($)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
+                    <div class="flex items-center">
+                        <div class="p-2 rounded-full bg-blue-100">
+                            <span class="text-xl">👥</span>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-gray-500">Total Socios</h3>
+                            <p class="text-xl font-bold text-gray-900" id="settingsTotalMembers">0</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500">
+                    <div class="flex items-center">
+                        <div class="p-2 rounded-full bg-green-100">
+                            <span class="text-xl">✅</span>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-gray-500">Socios Activos</h3>
+                            <p class="text-xl font-bold text-green-600" id="settingsActiveMembers">0</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-red-500">
+                    <div class="flex items-center">
+                        <div class="p-2 rounded-full bg-red-100">
+                            <span class="text-xl">❌</span>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-gray-500">Socios Inactivos</h3>
+                            <p class="text-xl font-bold text-red-600" id="settingsInactiveMembers">0</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-purple-500">
+                    <div class="flex items-center">
+                        <div class="p-2 rounded-full bg-purple-100">
+                            <span class="text-xl">💰</span>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-gray-500">Total Pagos</h3>
+                            <p class="text-xl font-bold text-purple-600" id="settingsTotalPayments">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="text-xl font-semibold text-gym-primary mb-4">Precios Actuales de Membresías</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="border rounded-lg p-4">
+                        <h4 class="font-medium text-gray-700">Plan Diario</h4>
+                        <p class="text-2xl font-bold text-gym-accent" id="settingsDailyPrice">$50</p>
+                    </div>
+                    <div class="border rounded-lg p-4">
+                        <h4 class="font-medium text-gray-700">Plan Semanal</h4>
+                        <p class="text-2xl font-bold text-gym-accent" id="settingsWeeklyPrice">$300</p>
+                    </div>
+                    <div class="border rounded-lg p-4">
+                        <h4 class="font-medium text-gray-700">Plan Quincenal</h4>
+                        <p class="text-2xl font-bold text-gym-accent" id="settingsBiweeklyPrice">$550</p>
+                    </div>
+                    <div class="border rounded-lg p-4">
+                        <h4 class="font-medium text-gray-700">Plan Mensual</h4>
+                        <p class="text-2xl font-bold text-gym-accent" id="settingsMonthlyPrice">$1000</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-xl font-semibold text-gym-primary mb-4">Estadísticas del POS</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Total Productos:</span>
+                            <span class="font-medium" id="settingsTotalProducts">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Total Ventas:</span>
+                            <span class="font-medium" id="settingsTotalSales">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Ingresos por Ventas:</span>
+                            <span class="font-medium" id="settingsSalesRevenue">$0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Producto Más Vendido:</span>
+                            <span class="font-medium" id="settingsBestSellingProduct">N/A</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-xl font-semibold text-gym-primary mb-4">Métodos de Pago (POS)</h3>
+                    <div class="space-y-3" id="settingsPaymentMethods">
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Member Modal -->
+    <div id="memberModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gym-primary" id="memberModalTitle">Nuevo Socio</h3>
+            </div>
+            <form id="memberForm" class="px-6 py-4">
+                <div class="md:col-span-2 flex flex-col items-center">
+                    <div class="relative mb-4">
+                        <img id="memberPhotoPreview" src="https://via.placeholder.com/150" alt="Foto del socio" class="w-32 h-32 rounded-full object-cover border-2 border-gray-300">
+                        <input type="file" id="memberPhoto" accept="image/*" class="hidden" capture="user">
+                        <button type="button" onclick="document.getElementById('memberPhoto').click()" class="absolute bottom-0 right-0 bg-gym-secondary text-white rounded-full p-2 hover:bg-blue-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Foto del Socio</label>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nombre Completo *</label>
+                        <input type="text" id="memberName" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Correo Electrónico *</label>
+                        <input type="email" id="memberEmail" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Celular *</label>
+                        <input type="tel" id="memberPhone" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Edad *</label>
+                        <input type="number" id="memberAge" required min="1" max="120" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Ciudad *</label>
+                        <input type="text" id="memberCity" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Dirección *</label>
+                        <textarea id="memberAddress" required rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Plan de Membresía *</label>
+                        <select id="membershipPlan" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                            <option value="">Seleccionar plan</option>
+                            <option value="daily">Diario</option>
+                            <option value="weekly">Semanal</option>
+                            <option value="biweekly">Quincenal</option>
+                            <option value="monthly">Mensual</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Inicio de Membresía *</label>
+                        <input type="date" id="membershipStart" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Estado *</label>
+                        <select id="memberStatus" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                            <option value="active">Activo</option>
+                            <option value="inactive">Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" id="cancelMemberBtn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-gym-secondary text-white rounded-md hover:bg-blue-600">
+                        Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gym-primary">Registrar Pago</h3>
+            </div>
+            <form id="paymentForm" class="px-6 py-4">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Socio *</label>
+                        <select id="paymentMember" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                            <option value="">Seleccionar socio</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Plan *</label>
+                        <select id="paymentPlan" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                            <option value="">Seleccionar plan</option>
+                            <option value="daily">Diario</option>
+                            <option value="weekly">Semanal</option>
+                            <option value="biweekly">Quincenal</option>
+                            <option value="monthly">Mensual</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Monto *</label>
+                        <input type="number" id="paymentAmount" required min="0" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Pago *</label>
+                        <input type="date" id="paymentDate" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" id="cancelPaymentBtn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-gym-secondary text-white rounded-md hover:bg-blue-600">
+                        Registrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div id="productModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gym-primary" id="productModalTitle">Nuevo Producto</h3>
+            </div>
+            <form id="productForm" class="px-6 py-4">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nombre *</label>
+                        <input type="text" id="productName" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Categoría *</label>
+                        <input type="text" id="productCategory" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Precio *</label>
+                            <input type="number" id="productPrice" required min="0" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Stock *</label>
+                            <input type="number" id="productStock" required min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+                        <textarea id="productDescription" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary"></textarea>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" id="cancelProductBtn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-gym-secondary text-white rounded-md hover:bg-blue-600">
+                        Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sales Modal -->
+    <div id="salesModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg font-semibold text-gym-primary">Historial de Ventas</h3>
+                <div class="flex space-x-2">
+                    <input type="date" id="salesDateFilter" class="px-3 py-1 border border-gray-300 rounded-md">
+                    <button id="exportVisibleSalesPDFBtn" class="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 text-sm">
+                        Exportar Visible
+                    </button>
+                    <button id="exportAllSalesPDFBtn" class="bg-green-600 text-white px-3 py-1 rounded-md hover:bg-green-700 text-sm">
+                        Exportar Todo
+                    </button>
+                    <button id="closeSalesBtn" class="px-4 py-1 bg-gray-500 text-white rounded-md hover:bg-gray-600">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div id="salesSummary" class="bg-gray-50 p-4 rounded-lg mb-4 hidden">
+                    <div class="grid grid-cols-3 gap-4 text-sm">
+                        <div>
+                            <span class="font-medium">Total Ventas:</span>
+                            <span id="summaryTotalSales" class="ml-2">0</span>
+                        </div>
+                        <div>
+                            <span class="font-medium">Monto Total:</span>
+                            <span id="summaryTotalAmount" class="ml-2">$0.00</span>
+                        </div>
+                        <div>
+                            <span class="font-medium">Productos Vendidos:</span>
+                            <span id="summaryTotalProducts" class="ml-2">0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Productos</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Método</th>
+                        </tr>
+                    </thead>
+                    <tbody id="salesTable" class="bg-white divide-y divide-gray-200">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Compra Exitosa -->
+    <div id="successModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 animate-bounce-in">
+            <div class="p-6 text-center">
+                <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-green-100 mb-4">
+                    <svg class="h-12 w-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">¡Compra Exitosa!</h3>
+                <p class="text-gray-600 mb-6">La venta se ha completado correctamente</p>
+                
+                <div class="bg-gray-50 rounded-lg p-4 mb-6 text-left">
+                    <div class="flex justify-between mb-2">
+                        <span class="text-gray-600">Total:</span>
+                        <span class="font-bold text-gray-900" id="successTotal">$0.00</span>
+                    </div>
+                    <div class="flex justify-between mb-2">
+                        <span class="text-gray-600">Efectivo recibido:</span>
+                        <span class="font-medium text-gray-900" id="successCashReceived">$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-xl font-bold text-green-600 border-t border-gray-200 pt-3 mt-2">
+                        <span>Cambio:</span>
+                        <span id="successChange">$0.00</span>
+                    </div>
+                    <div class="flex justify-between mt-3 text-sm text-gray-500">
+                        <span>Método de pago:</span>
+                        <span id="successPaymentMethod" class="font-medium">Efectivo</span>
+                    </div>
+                    <div class="flex justify-between mt-1 text-sm text-gray-500">
+                        <span>Productos:</span>
+                        <span id="successProductCount" class="font-medium">0</span>
+                    </div>
+                </div>
+                
+                <button id="closeSuccessBtn" class="w-full bg-gym-secondary text-white py-3 rounded-lg hover:bg-blue-600 transition duration-200 font-medium text-lg">
+                    Aceptar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación para Eliminación Masiva -->
+    <div id="bulkDeleteModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gym-primary">Confirmar Eliminación Masiva</h3>
+            </div>
+            <div class="px-6 py-4">
+                <p class="text-gray-700 mb-4" id="bulkDeleteMessage">¿Estás seguro de que deseas eliminar los socios seleccionados?</p>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button id="cancelBulkDeleteBtn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        Cancelar
+                    </button>
+                    <button id="confirmBulkDeleteBtn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                        Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edición de Pago -->
+    <div id="editPaymentModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gym-primary">Editar Pago</h3>
+            </div>
+            <form id="editPaymentForm" class="px-6 py-4">
+                <input type="hidden" id="editPaymentId">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Socio *</label>
+                        <select id="editPaymentMember" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary" disabled>
+                            <option value="">Seleccionar socio</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Plan *</label>
+                        <select id="editPaymentPlan" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                            <option value="">Seleccionar plan</option>
+                            <option value="daily">Diario</option>
+                            <option value="weekly">Semanal</option>
+                            <option value="biweekly">Quincenal</option>
+                            <option value="monthly">Mensual</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Monto *</label>
+                        <input type="number" id="editPaymentAmount" required min="0" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Pago *</label>
+                        <input type="date" id="editPaymentDate" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" id="cancelEditPaymentBtn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-gym-secondary text-white rounded-md hover:bg-blue-600">
+                        Actualizar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación para Eliminación de Pago -->
+    <div id="deletePaymentModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gym-primary">Confirmar Eliminación</h3>
+            </div>
+            <div class="px-6 py-4">
+                <p class="text-gray-700 mb-4" id="deletePaymentMessage">¿Estás seguro de que deseas eliminar este pago?</p>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button id="cancelDeletePaymentBtn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        Cancelar
+                    </button>
+                    <button id="confirmDeletePaymentBtn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                        Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación para Eliminación Masiva de Pagos -->
+    <div id="bulkDeletePaymentsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gym-primary">Confirmar Eliminación Masiva</h3>
+            </div>
+            <div class="px-6 py-4">
+                <p class="text-gray-700 mb-4" id="bulkDeletePaymentsMessage">¿Estás seguro de que deseas eliminar los pagos seleccionados?</p>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button id="cancelBulkDeletePaymentsBtn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        Cancelar
+                    </button>
+                    <button id="confirmBulkDeletePaymentsBtn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                        Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación para Exportar Todo -->
+    <div id="exportAllDataModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gym-primary">Exportar Todos los Datos</h3>
+            </div>
+            <div class="px-6 py-4">
+                <p class="text-gray-700 mb-4">¿Estás seguro de que deseas exportar todos los datos del sistema? Se generará un reporte PDF completo con toda la información.</p>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button id="cancelExportAllBtn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        Cancelar
+                    </button>
+                    <button id="confirmExportAllBtn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                        Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación para Reiniciar Sistema -->
+    <div id="resetSystemModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gym-primary">Reiniciar Sistema</h3>
+            </div>
+            <div class="px-6 py-4">
+                <p class="text-red-600 font-medium mb-2">¡ADVERTENCIA CRÍTICA!</p>
+                <p class="text-gray-700 mb-4">¿Estás absolutamente seguro de que deseas reiniciar el sistema? Esta acción:</p>
+                <ul class="list-disc list-inside text-gray-700 mb-4 text-sm">
+                    <li>Eliminará TODOS los socios</li>
+                    <li>Eliminará TODOS los pagos</li>
+                    <li>Eliminará TODOS los productos del POS</li>
+                    <li>Eliminará TODAS las ventas</li>
+                    <li>Restablecerá los precios a los valores predeterminados</li>
+                    <li>Eliminará TODAS las actividades del historial</li>
+                </ul>
+                <p class="text-red-600 font-medium mb-4">Esta acción no se puede deshacer.</p>
+                <div class="flex items-center mb-4">
+                    <input type="checkbox" id="confirmResetCheckbox" class="mr-2">
+                    <label for="confirmResetCheckbox" class="text-sm text-gray-700">Comprendo que todos los datos se perderán permanentemente</label>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button id="cancelResetBtn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        Cancelar
+                    </button>
+                    <button id="confirmResetBtn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        Reiniciar Sistema
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let filteredSales = [];
+        let selectedPayments = [];
+        let editingPaymentId = null;
+        let deletingPaymentId = null;
+        let selectedMembers = [];
+        let products = JSON.parse(localStorage.getItem('gymProducts')) || [];
+        let sales = JSON.parse(localStorage.getItem('gymSales')) || [];
+        let cart = [];
+        let currentPaymentMethod = 'efectivo';
+        let editingProductId = null;
+        let memberPhotoBase64 = null;
+        let members = JSON.parse(localStorage.getItem('gymMembers') || '[]');
+        let payments = JSON.parse(localStorage.getItem('gymPayments') || '[]');
+        let activities = JSON.parse(localStorage.getItem('gymActivities') || '[]');
+        let prices = JSON.parse(localStorage.getItem('gymPrices') || '{"daily": 50, "weekly": 300, "biweekly": 550, "monthly": 1000}');
+        let currentCurrency = localStorage.getItem('gymCurrency') || 'MXN';
+        let editingMemberId = null;
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            setupEventListeners();
+            updateDashboard();
+            loadMembers();
+            loadPayments();
+            loadActivities();
+            updatePriceDisplay();
+            document.getElementById('currencySelect').value = currentCurrency;
+            document.getElementById('membershipStart').value = new Date().toISOString().split('T')[0];
+            document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
+        }
+
+        function setupEventListeners() {
+            document.getElementById('paymentDateFromFilter').addEventListener('change', filterPayments);
+            document.getElementById('paymentDateToFilter').addEventListener('change', filterPayments);
+            document.getElementById('clearPaymentFilters').addEventListener('click', clearPaymentFilters);
+
+            // Navigation
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => showSection(e.target.dataset.section));
+            });
+
+            // Currency change
+            document.getElementById('currencySelect').addEventListener('change', (e) => {
+                currentCurrency = e.target.value;
+                localStorage.setItem('gymCurrency', currentCurrency);
+                updatePriceDisplay();
+                loadMembers();
+                loadPayments();
+                updateCart();
+            });
+              
+            // Configuración
+            document.getElementById('exportAllDataPDFBtn').addEventListener('click', openExportAllDataModal);
+            document.getElementById('resetSystemBtn').addEventListener('click', openResetSystemModal);
+            document.getElementById('confirmExportAllBtn').addEventListener('click', exportAllDataPDF);
+            document.getElementById('cancelExportAllBtn').addEventListener('click', closeExportAllDataModal);
+            document.getElementById('exportAllDataModal').addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) closeExportAllDataModal();
+            });
+            
+            document.getElementById('confirmResetCheckbox').addEventListener('change', function() {
+                document.getElementById('confirmResetBtn').disabled = !this.checked;
+            });
+            document.getElementById('confirmResetBtn').addEventListener('click', resetSystem);
+            document.getElementById('cancelResetBtn').addEventListener('click', closeResetSystemModal);
+            document.getElementById('resetSystemModal').addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) closeResetSystemModal();
+            });
+
+            // Gestión de pagos
+            document.getElementById('bulkDeletePaymentsBtn').addEventListener('click', openBulkDeletePaymentsModal);
+            document.getElementById('selectAllPayments').addEventListener('change', toggleSelectAllPayments);
+            document.getElementById('confirmBulkDeletePaymentsBtn').addEventListener('click', confirmBulkDeletePayments);
+            document.getElementById('cancelBulkDeletePaymentsBtn').addEventListener('click', closeBulkDeletePaymentsModal);
+            document.getElementById('bulkDeletePaymentsModal').addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) closeBulkDeletePaymentsModal();
+            });
+            
+            // Edición de pago
+            document.getElementById('editPaymentForm').addEventListener('submit', updatePayment);
+            document.getElementById('cancelEditPaymentBtn').addEventListener('click', closeEditPaymentModal);
+            document.getElementById('editPaymentModal').addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) closeEditPaymentModal();
+            });
+            
+            // Eliminación de pago
+            document.getElementById('confirmDeletePaymentBtn').addEventListener('click', confirmDeletePayment);
+            document.getElementById('cancelDeletePaymentBtn').addEventListener('click', closeDeletePaymentModal);
+            document.getElementById('deletePaymentModal').addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) closeDeletePaymentModal();
+            });
+
+            // Member modal
+            document.getElementById('addMemberBtn').addEventListener('click', () => {
+                editingMemberId = null;
+                document.getElementById('memberModalTitle').textContent = 'Nuevo Socio';
+                document.getElementById('memberForm').reset();
+                document.getElementById('memberPhotoPreview').src = "https://via.placeholder.com/150";
+                memberPhotoBase64 = null;
+                document.getElementById('memberModal').classList.remove('hidden');
+                document.getElementById('memberModal').classList.add('flex');
+            });
+
+            document.getElementById('cancelMemberBtn').addEventListener('click', closeMemberModal);
+            document.getElementById('memberForm').addEventListener('submit', saveMember);
+
+            // Payment modal
+            document.getElementById('addPaymentBtn').addEventListener('click', () => {
+                loadMembersToPaymentSelect();
+                document.getElementById('paymentForm').reset();
+                document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
+                document.getElementById('paymentModal').classList.remove('hidden');
+                document.getElementById('paymentModal').classList.add('flex');
+            });
+
+            document.getElementById('cancelPaymentBtn').addEventListener('click', closePaymentModal);
+            document.getElementById('paymentForm').addEventListener('submit', savePayment);
+
+            // Plan selection auto-fill price
+            document.getElementById('paymentPlan').addEventListener('change', (e) => {
+                const plan = e.target.value;
+                if (plan && prices[plan]) {
+                    document.getElementById('paymentAmount').value = prices[plan];
+                }
+            });
+
+            // Eliminación masiva de socios
+            document.getElementById('bulkDeleteBtn').addEventListener('click', openBulkDeleteModal);
+            document.getElementById('selectAllMembers').addEventListener('change', toggleSelectAllMembers);
+            document.getElementById('confirmBulkDeleteBtn').addEventListener('click', confirmBulkDelete);
+            document.getElementById('cancelBulkDeleteBtn').addEventListener('click', closeBulkDeleteModal);
+            document.getElementById('bulkDeleteModal').addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) closeBulkDeleteModal();
+            });
+
+            // Filters
+            document.getElementById('searchMembers').addEventListener('input', filterMembers);
+            document.getElementById('statusFilter').addEventListener('change', filterMembers);
+            document.getElementById('cityFilter').addEventListener('change', filterMembers);
+            document.getElementById('clearFilters').addEventListener('click', clearFilters);
+
+            // Activity filters
+            document.getElementById('activityTypeFilter').addEventListener('change', filterActivities);
+            document.getElementById('dateFromFilter').addEventListener('change', filterActivities);
+            document.getElementById('dateToFilter').addEventListener('change', filterActivities);
+
+            // Close modals on outside click
+            document.getElementById('memberModal').addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) closeMemberModal();
+            });
+            document.getElementById('paymentModal').addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) closePaymentModal();
+            });
+
+            // Photo upload
+            document.getElementById('memberPhoto').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    memberPhotoBase64 = event.target.result;
+                    document.getElementById('memberPhotoPreview').src = memberPhotoBase64;
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // Export/Import
+            document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
+            document.getElementById('exportPDFBtn').addEventListener('click', exportToPDF);
+            document.getElementById('importExcelBtn').addEventListener('click', () => {
+                document.getElementById('excelImportInput').click();
+            });
+            document.getElementById('excelImportInput').addEventListener('change', importFromExcel);
+            document.getElementById('exportPaymentsPDFBtn').addEventListener('click', exportPaymentsToPDF);
+
+            // POS Success Modal
+            document.getElementById('closeSuccessBtn').addEventListener('click', closeSuccessModal);
+            document.getElementById('successModal').addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) closeSuccessModal();
+            });
+        }
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.add('hidden');
+            });
+
+            document.getElementById(sectionId).classList.remove('hidden');
+            document.getElementById(sectionId).classList.add('fade-in');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active', 'border-gym-secondary', 'text-gym-secondary');
+                btn.classList.add('border-transparent', 'text-gray-500');
+            });
+
+            const activeBtn = document.querySelector(`[data-section="${sectionId}"]`);
+            activeBtn.classList.add('active', 'border-gym-secondary', 'text-gym-secondary');
+            activeBtn.classList.remove('border-transparent', 'text-gray-500');
+
+            if (sectionId === 'members') {
+                loadMembers();
+                populateCityFilter();
+            } else if (sectionId === 'payments') {
+                loadPayments();
+                loadMembersToPaymentSelect();
+            } else if (sectionId === 'history') {
+                loadActivities();
+            } else if (sectionId === 'pos') {
+                initializePOS();
+            } else if (sectionId === 'settings') {
+                loadSettingsData();
+            }
+        }
+
+        function updateDashboard() {
+            const total = members.length;
+            const active = members.filter(m => {
+                const status = m.status || (isActiveMember(m) ? 'active' : 'inactive');
+                return status === 'active';
+            }).length;
+            const inactive = total - active;
+
+            document.getElementById('totalMembers').textContent = total;
+            document.getElementById('activeMembers').textContent = active;
+            document.getElementById('inactiveMembers').textContent = inactive;
+
+            loadRecentActivities();
+        }
+
+        function loadRecentActivities() {
+            const recentActivities = activities.slice(-5).reverse();
+            const container = document.getElementById('recentActivity');
+
+            if (recentActivities.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">No hay actividad reciente</p>';
+                return;
+            }
+
+            container.innerHTML = recentActivities.map(activity => `
+                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                    <div class="flex-shrink-0">
+                        <span class="text-lg">${getActivityIcon(activity.type)}</span>
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <p class="text-sm font-medium text-gray-900">${activity.description}</p>
+                        <p class="text-xs text-gray-500">${formatDateTime(activity.timestamp)}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getActivityIcon(type) {
+            const icons = {
+                member_added: '👤',
+                member_updated: '✏️',
+                member_deleted: '🗑️',
+                payment_added: '💰',
+                price_updated: '💲',
+                sale_completed: '🛒',
+                product_added: '📦',
+                product_updated: '📝',
+                product_deleted: '🗑️'
+            };
+            return icons[type] || '📝';
+        }
+
+        function isActiveMember(member) {
+            if (member.status) {
+                return member.status === 'active';
+            }
+            const endDate = new Date(member.membershipEnd);
+            const today = new Date();
+            return endDate >= today;
+        }
+
+        function calculateMembershipEnd(startDate, plan) {
+            const start = new Date(startDate);
+            const end = new Date(start);
+
+            switch (plan) {
+                case 'daily':
+                    end.setDate(start.getDate() + 1);
+                    break;
+                case 'weekly':
+                    end.setDate(start.getDate() + 7);
+                    break;
+                case 'biweekly':
+                    end.setDate(start.getDate() + 15);
+                    break;
+                case 'monthly':
+                    end.setMonth(start.getMonth() + 1);
+                    break;
+            }
+
+            return end.toISOString().split('T')[0];
+        }
+
+        function saveMember(e) {
+            e.preventDefault();
+
+            const memberData = {
+                id: editingMemberId || Date.now().toString(),
+                name: document.getElementById('memberName').value,
+                email: document.getElementById('memberEmail').value,
+                phone: document.getElementById('memberPhone').value,
+                age: parseInt(document.getElementById('memberAge').value),
+                city: document.getElementById('memberCity').value,
+                address: document.getElementById('memberAddress').value,
+                membershipPlan: document.getElementById('membershipPlan').value,
+                membershipStart: document.getElementById('membershipStart').value,
+                membershipEnd: calculateMembershipEnd(
+                    document.getElementById('membershipStart').value,
+                    document.getElementById('membershipPlan').value
+                ),
+                status: document.getElementById('memberStatus').value,
+                photo: memberPhotoBase64 || null,
+                createdAt: editingMemberId ? members.find(m => m.id === editingMemberId).createdAt : new Date().toISOString()
+            };
+
+            if (editingMemberId) {
+                const index = members.findIndex(m => m.id === editingMemberId);
+                if (!memberPhotoBase64 && members[index].photo) {
+                    memberData.photo = members[index].photo;
+                }
+                members[index] = memberData;
+                addActivity('member_updated', `Socio actualizado: ${memberData.name}`);
+            } else {
+                members.push(memberData);
+                addActivity('member_added', `Nuevo socio registrado: ${memberData.name}`);
+            }
+
+            localStorage.setItem('gymMembers', JSON.stringify(members));
+            closeMemberModal();
+            loadMembers();
+            updateDashboard();
+        }
+
+        function editMember(id) {
+            const member = members.find(m => m.id === id);
+            if (!member) return;
+
+            editingMemberId = id;
+            document.getElementById('memberModalTitle').textContent = 'Editar Socio';
+            document.getElementById('memberName').value = member.name;
+            document.getElementById('memberEmail').value = member.email;
+            document.getElementById('memberPhone').value = member.phone;
+            document.getElementById('memberAge').value = member.age;
+            document.getElementById('memberCity').value = member.city;
+            document.getElementById('memberAddress').value = member.address;
+            document.getElementById('membershipPlan').value = member.membershipPlan;
+            document.getElementById('membershipStart').value = member.membershipStart;
+            document.getElementById('memberStatus').value = member.status || 'active';
+            
+            if (member.photo) {
+                document.getElementById('memberPhotoPreview').src = member.photo;
+                memberPhotoBase64 = member.photo;
+            } else {
+                document.getElementById('memberPhotoPreview').src = "https://via.placeholder.com/150";
+                memberPhotoBase64 = null;
+            }
+
+            document.getElementById('memberModal').classList.remove('hidden');
+            document.getElementById('memberModal').classList.add('flex');
+        }
+
+        function deleteMember(id) {
+            const member = members.find(m => m.id === id);
+            if (!member) return;
+
+            if (confirm(`¿Estás seguro de eliminar al socio ${member.name}?`)) {
+                members = members.filter(m => m.id !== id);
+                localStorage.setItem('gymMembers', JSON.stringify(members));
+                addActivity('member_deleted', `Socio eliminado: ${member.name}`);
+                loadMembers();
+                updateDashboard();
+            }
+        }
+
+        function closeMemberModal() {
+            document.getElementById('memberModal').classList.add('hidden');
+            document.getElementById('memberModal').classList.remove('flex');
+            editingMemberId = null;
+            memberPhotoBase64 = null;
+            document.getElementById('memberPhotoPreview').src = "https://via.placeholder.com/150";
+            document.getElementById('memberPhoto').value = '';
+        }
+
+        function loadMembers() {
+            const tbody = document.getElementById('membersTable');
+            
+            if (members.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                            No hay socios registrados
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = members.map(member => {
+                const isActive = isActiveMember(member);
+                const statusBadge = isActive 
+                    ? '<span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full">Activo</span>'
+                    : '<span class="px-2 py-1 text-xs font-semibold text-red-800 bg-red-100 rounded-full">Inactivo</span>';
+
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="checkbox" class="member-checkbox rounded text-gym-secondary" 
+                                   data-id="${member.id}" 
+                                   onchange="toggleMemberSelection('${member.id}', this)">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10">
+                                    <img class="h-10 w-10 rounded-full object-cover" src="${member.photo || 'https://via.placeholder.com/150'}" alt="${member.name}">
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">${member.name}</div>
+                                    <div class="text-sm text-gray-500">${member.age} años - ${member.city}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">${member.email}</div>
+                            <div class="text-sm text-gray-500">${member.phone}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">Plan ${getPlanName(member.membershipPlan)}</div>
+                            <div class="text-sm text-gray-500">${formatDate(member.membershipStart)} - ${formatDate(member.membershipEnd)}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex flex-col space-y-1">
+                                <div>
+                                    <button onclick="editMember('${member.id}')" class="text-gym-secondary hover:text-blue-600 mr-3">Editar</button>
+                                    <button onclick="deleteMember('${member.id}')" class="text-red-600 hover:text-red-800">Eliminar</button>
+                                </div>
+                                <div class="flex space-x-1">
+                                    <button onclick="toggleMemberStatus('${member.id}', 'active')" class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded ${isActive ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-200'}">Activar</button>
+                                    <button onclick="toggleMemberStatus('${member.id}', 'inactive')" class="text-xs px-2 py-1 bg-red-100 text-red-800 rounded ${!isActive ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-200'}">Desactivar</button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            updateBulkDeleteButtonState();
+        }
+
+        function getPlanName(plan) {
+            const names = {
+                daily: 'Diario',
+                weekly: 'Semanal',
+                biweekly: 'Quincenal',
+                monthly: 'Mensual'
+            };
+            return names[plan] || plan;
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('es-MX');
+        }
+
+        function formatDateTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-MX') + ' ' + date.toLocaleTimeString('es-MX', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        }
+
+        function filterMembers() {
+            const search = document.getElementById('searchMembers').value.toLowerCase();
+            const status = document.getElementById('statusFilter').value;
+            const city = document.getElementById('cityFilter').value;
+
+            let filtered = members;
+
+            if (search) {
+                filtered = filtered.filter(member => 
+                    member.name.toLowerCase().includes(search) ||
+                    member.email.toLowerCase().includes(search) ||
+                    member.phone.includes(search)
+                );
+            }
+
+            if (status) {
+                filtered = filtered.filter(member => {
+                    const memberStatus = member.status || (isActiveMember(member) ? 'active' : 'inactive');
+                    return status === 'active' ? memberStatus === 'active' : memberStatus === 'inactive';
+                });
+            }
+
+            if (city) {
+                filtered = filtered.filter(member => member.city === city);
+            }
+
+            const tbody = document.getElementById('membersTable');
+            
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                            No se encontraron socios con los filtros aplicados
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(member => {
+                const isActive = isActiveMember(member);
+                const statusBadge = isActive 
+                    ? '<span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full">Activo</span>'
+                    : '<span class="px-2 py-1 text-xs font-semibold text-red-800 bg-red-100 rounded-full">Inactivo</span>';
+
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="checkbox" class="member-checkbox rounded text-gym-secondary" 
+                                   data-id="${member.id}" 
+                                   onchange="toggleMemberSelection('${member.id}', this)">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10">
+                                    <img class="h-10 w-10 rounded-full object-cover" src="${member.photo || 'https://via.placeholder.com/150'}" alt="${member.name}">
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">${member.name}</div>
+                                    <div class="text-sm text-gray-500">${member.age} años - ${member.city}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">${member.email}</div>
+                            <div class="text-sm text-gray-500">${member.phone}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">Plan ${getPlanName(member.membershipPlan)}</div>
+                            <div class="text-sm text-gray-500">${formatDate(member.membershipStart)} - ${formatDate(member.membershipEnd)}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="editMember('${member.id}')" class="text-gym-secondary hover:text-blue-600 mr-3">Editar</button>
+                            <button onclick="deleteMember('${member.id}')" class="text-red-600 hover:text-red-800">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function clearFilters() {
+            document.getElementById('searchMembers').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('cityFilter').value = '';
+            loadMembers();
+        }
+
+        function populateCityFilter() {
+            const cities = [...new Set(members.map(m => m.city))].sort();
+            const select = document.getElementById('cityFilter');
+            
+            select.innerHTML = '<option value="">Todas</option>';
+            cities.forEach(city => {
+                select.innerHTML += `<option value="${city}">${city}</option>`;
+            });
+        }
+
+        function savePayment(e) {
+            e.preventDefault();
+
+            const paymentData = {
+                id: Date.now().toString(),
+                memberId: document.getElementById('paymentMember').value,
+                plan: document.getElementById('paymentPlan').value,
+                amount: parseFloat(document.getElementById('paymentAmount').value),
+                date: document.getElementById('paymentDate').value,
+                currency: currentCurrency,
+                createdAt: new Date().toISOString()
+            };
+
+            payments.push(paymentData);
+            localStorage.setItem('gymPayments', JSON.stringify(payments));
+
+            const member = members.find(m => m.id === paymentData.memberId);
+            addActivity('payment_added', `Pago registrado: ${getCurrencySymbol()}${paymentData.amount} - ${member.name}`);
+
+            closePaymentModal();
+            loadPayments();
+        }
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.add('hidden');
+            document.getElementById('paymentModal').classList.remove('flex');
+        }
+
+        function loadMembersToPaymentSelect() {
+            const select = document.getElementById('paymentMember');
+            select.innerHTML = '<option value="">Seleccionar socio</option>';
+            
+            members.forEach(member => {
+                select.innerHTML += `<option value="${member.id}">${member.name}</option>`;
+            });
+        }
+
+        function loadPayments() {
+            renderPaymentsTable(payments.slice(-10).reverse());
+        }
+
+        function renderPaymentsTable(paymentsToRender) {
+            const tbody = document.getElementById('paymentsTable');
+            
+            if (paymentsToRender.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                            No hay pagos registrados
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = paymentsToRender.map(payment => {
+                const member = members.find(m => m.id === payment.memberId);
+                const memberName = member ? member.name : 'Socio eliminado';
+
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="checkbox" class="payment-checkbox rounded text-gym-secondary" 
+                                   data-id="${payment.id}" 
+                                   onchange="togglePaymentSelection('${payment.id}', this)">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">${memberName}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">Plan ${getPlanName(payment.plan)}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">${getCurrencySymbol()}${payment.amount.toFixed(2)}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">${formatDate(payment.date)}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full">Pagado</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="editPayment('${payment.id}')" class="text-gym-secondary hover:text-blue-600 mr-3">Editar</button>
+                            <button onclick="deletePayment('${payment.id}')" class="text-red-600 hover:text-red-800">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            updateBulkDeletePaymentsButtonState();
+            updateSelectedPaymentsCount();
+        }
+
+        function getCurrencySymbol() {
+            const symbols = {
+                'MXN': '$',
+                'USD': '$',
+                'EUR': '€'
+            };
+            return symbols[currentCurrency] || '$';
+        }
+
+        function updatePriceDisplay() {
+            const symbol = getCurrencySymbol();
+            document.getElementById('dailyPrice').textContent = `${symbol}${prices.daily}`;
+            document.getElementById('weeklyPrice').textContent = `${symbol}${prices.weekly}`;
+            document.getElementById('biweeklyPrice').textContent = `${symbol}${prices.biweekly}`;
+            document.getElementById('monthlyPrice').textContent = `${symbol}${prices.monthly}`;
+        }
+
+        function editPrice(plan) {
+            const currentPrice = prices[plan];
+            const newPrice = prompt(`Ingrese el nuevo precio para el plan ${getPlanName(plan)}:`, currentPrice);
+            
+            if (newPrice !== null && !isNaN(newPrice) && newPrice > 0) {
+                prices[plan] = parseFloat(newPrice);
+                localStorage.setItem('gymPrices', JSON.stringify(prices));
+                updatePriceDisplay();
+                addActivity('price_updated', `Precio actualizado: Plan ${getPlanName(plan)} - ${getCurrencySymbol()}${newPrice}`);
+            }
+        }
+
+        function addActivity(type, description) {
+            const activity = {
+                id: Date.now().toString(),
+                type: type,
+                description: description,
+                timestamp: new Date().toISOString()
+            };
+
+            activities.push(activity);
+            localStorage.setItem('gymActivities', JSON.stringify(activities));
+        }
+
+        function loadActivities() {
+            const container = document.getElementById('activityList');
+            
+            if (activities.length === 0) {
+                container.innerHTML = '<div class="px-6 py-8 text-center text-gray-500">No hay actividades registradas</div>';
+                return;
+            }
+
+            const sortedActivities = activities.slice().reverse();
+            
+            container.innerHTML = sortedActivities.map(activity => `
+                <div class="px-6 py-4 hover:bg-gray-50">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <span class="text-2xl">${getActivityIcon(activity.type)}</span>
+                        </div>
+                        <div class="ml-4 flex-1">
+                            <p class="text-sm font-medium text-gray-900">${activity.description}</p>
+                            <p class="text-xs text-gray-500">${formatDateTime(activity.timestamp)}</p>
+                        </div>
+                        <div class="text-xs text-gray-400">
+                            ${getActivityTypeName(activity.type)}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getActivityTypeName(type) {
+            const names = {
+                member_added: 'Socio Agregado',
+                member_updated: 'Socio Actualizado',
+                member_deleted: 'Socio Eliminado',
+                payment_added: 'Pago Registrado',
+                price_updated: 'Precio Actualizado',
+                sale_completed: 'Venta Completada'
+            };
+            return names[type] || type;
+        }
+
+        function filterActivities() {
+            const typeFilter = document.getElementById('activityTypeFilter').value;
+            const dateFrom = document.getElementById('dateFromFilter').value;
+            const dateTo = document.getElementById('dateToFilter').value;
+
+            let filtered = activities;
+
+            if (typeFilter) {
+                filtered = filtered.filter(activity => activity.type === typeFilter);
+            }
+
+            if (dateFrom) {
+                filtered = filtered.filter(activity => {
+                    const activityDate = new Date(activity.timestamp).toISOString().split('T')[0];
+                    return activityDate >= dateFrom;
+                });
+            }
+
+            if (dateTo) {
+                filtered = filtered.filter(activity => {
+                    const activityDate = new Date(activity.timestamp).toISOString().split('T')[0];
+                    return activityDate <= dateTo;
+                });
+            }
+
+            const container = document.getElementById('activityList');
+            
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="px-6 py-8 text-center text-gray-500">No se encontraron actividades con los filtros aplicados</div>';
+                return;
+            }
+
+            const sortedFiltered = filtered.slice().reverse();
+            
+            container.innerHTML = sortedFiltered.map(activity => `
+                <div class="px-6 py-4 hover:bg-gray-50">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <span class="text-2xl">${getActivityIcon(activity.type)}</span>
+                        </div>
+                        <div class="ml-4 flex-1">
+                            <p class="text-sm font-medium text-gray-900">${activity.description}</p>
+                            <p class="text-xs text-gray-500">${formatDateTime(activity.timestamp)}</p>
+                        </div>
+                        <div class="text-xs text-gray-400">
+                            ${getActivityTypeName(activity.type)}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ============ POS FUNCTIONS ============
+        
+        function initializePOS() {
+            loadProducts();
+            loadCategories();
+            setupPOSEventListeners();
+            updateCart();
+        }
+
+        function setupPOSEventListeners() {
+            // Solo agregar listeners si no existen
+            if (!document.getElementById('addProductBtn').hasAttribute('data-listener')) {
+                document.getElementById('addProductBtn').setAttribute('data-listener', 'true');
+                
+                document.getElementById('addProductBtn').addEventListener('click', () => {
+                    editingProductId = null;
+                    document.getElementById('productModalTitle').textContent = 'Nuevo Producto';
+                    document.getElementById('productForm').reset();
+                    document.getElementById('productModal').classList.remove('hidden');
+                    document.getElementById('productModal').classList.add('flex');
+                });
+                
+                document.getElementById('cancelProductBtn').addEventListener('click', closeProductModal);
+                document.getElementById('productForm').addEventListener('submit', saveProduct);
+                
+                document.getElementById('exportSalesPDFBtn').addEventListener('click', exportSalesPDF);
+                document.getElementById('exportVisibleSalesPDFBtn').addEventListener('click', exportVisibleSalesPDF);
+                document.getElementById('exportAllSalesPDFBtn').addEventListener('click', exportAllSalesPDF);
+
+                document.getElementById('clearCartBtn').addEventListener('click', clearCart);
+                document.getElementById('checkoutBtn').addEventListener('click', checkout);
+                document.getElementById('closeSalesBtn').addEventListener('click', closeSalesModal);
+                document.getElementById('viewSalesBtn').addEventListener('click', viewSales);
+                
+                document.getElementById('productSearch').addEventListener('input', filterProducts);
+                document.getElementById('productCategoryFilter').addEventListener('change', filterProducts);
+                document.getElementById('salesDateFilter').addEventListener('change', filterSales);
+                
+                // Campo de efectivo recibido
+                document.getElementById('cashReceived').addEventListener('input', calculateChange);
+                
+                // Métodos de pago
+                document.querySelectorAll('.payment-method').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        currentPaymentMethod = this.dataset.method;
+                        document.querySelectorAll('.payment-method').forEach(b => {
+                            b.classList.remove('ring-2', 'ring-gym-secondary');
+                        });
+                        this.classList.add('ring-2', 'ring-gym-secondary');
+                        
+                        // Si cambia a un método que no es efectivo, limpiar el campo de efectivo
+                        if (currentPaymentMethod !== 'efectivo') {
+                            document.getElementById('cashReceived').value = '';
+                            document.getElementById('changeAmount').textContent = `${getCurrencySymbol()}0.00`;
+                            document.getElementById('changeAmount').className = 'text-lg font-bold text-gray-400';
+                        }
+                    });
+                });
+                
+                // Cerrar modales al hacer clic fuera
+                document.getElementById('productModal').addEventListener('click', (e) => {
+                    if (e.target === e.currentTarget) closeProductModal();
+                });
+                document.getElementById('salesModal').addEventListener('click', (e) => {
+                    if (e.target === e.currentTarget) closeSalesModal();
+                });
+            }
+        }
+
+        function loadProducts() {
+            const productsGrid = document.getElementById('productsGrid');
+            productsGrid.innerHTML = '';
+            
+            if (products.length === 0) {
+                productsGrid.innerHTML = '<p class="text-gray-500 col-span-full text-center py-8">No hay productos registrados</p>';
+                return;
+            }
+            
+            products.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.className = 'bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition cursor-pointer';
+                productCard.innerHTML = `
+                    <div class="flex flex-col h-full">
+                        <div class="flex-grow">
+                            <h4 class="font-medium text-gym-primary">${product.name}</h4>
+                            <p class="text-sm text-gray-600 mb-2">${product.category}</p>
+                            <p class="text-xs text-gray-500">${product.description || 'Sin descripción'}</p>
+                        </div>
+                        <div class="mt-4 flex justify-between items-end">
+                            <div>
+                                <span class="text-lg font-bold">${getCurrencySymbol()}${product.price.toFixed(2)}</span>
+                                <span class="text-xs text-gray-500 block">Stock: ${product.stock}</span>
+                            </div>
+                            <div class="flex space-x-1">
+                                <button onclick="event.stopPropagation(); editProduct('${product.id}')" class="text-gym-secondary hover:text-blue-600 p-1">
+                                    ✏️
+                                </button>
+                                <button onclick="event.stopPropagation(); deleteProduct('${product.id}')" class="text-red-600 hover:text-red-800 p-1">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                productCard.addEventListener('click', () => addToCart(product.id));
+                productsGrid.appendChild(productCard);
+            });
+        }
+
+        function loadCategories() {
+            const categories = [...new Set(products.map(p => p.category))].sort();
+            const select = document.getElementById('productCategoryFilter');
+            
+            select.innerHTML = '<option value="">Todas las categorías</option>';
+            categories.forEach(category => {
+                select.innerHTML += `<option value="${category}">${category}</option>`;
+            });
+        }
+
+        function filterProducts() {
+            const search = document.getElementById('productSearch').value.toLowerCase();
+            const category = document.getElementById('productCategoryFilter').value;
+            
+            let filtered = products;
+            
+            if (search) {
+                filtered = filtered.filter(product => 
+                    product.name.toLowerCase().includes(search) ||
+                    (product.description && product.description.toLowerCase().includes(search)) ||
+                    product.category.toLowerCase().includes(search)
+                );
+            }
+            
+            if (category) {
+                filtered = filtered.filter(product => product.category === category);
+            }
+            
+            const productsGrid = document.getElementById('productsGrid');
+            productsGrid.innerHTML = '';
+            
+            if (filtered.length === 0) {
+                productsGrid.innerHTML = '<p class="text-gray-500 col-span-full text-center py-8">No se encontraron productos</p>';
+                return;
+            }
+            
+            filtered.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.className = 'bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition cursor-pointer';
+                productCard.innerHTML = `
+                    <div class="flex flex-col h-full">
+                        <div class="flex-grow">
+                            <h4 class="font-medium text-gym-primary">${product.name}</h4>
+                            <p class="text-sm text-gray-600 mb-2">${product.category}</p>
+                            <p class="text-xs text-gray-500">${product.description || 'Sin descripción'}</p>
+                        </div>
+                        <div class="mt-4 flex justify-between items-end">
+                            <div>
+                                <span class="text-lg font-bold">${getCurrencySymbol()}${product.price.toFixed(2)}</span>
+                                <span class="text-xs text-gray-500 block">Stock: ${product.stock}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                productCard.addEventListener('click', () => addToCart(product.id));
+                productsGrid.appendChild(productCard);
+            });
+        }
+
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product || product.stock <= 0) {
+                alert('No hay stock disponible de este producto');
+                return;
+            }
+            
+            const existingItem = cart.find(item => item.product.id === productId);
+            
+            if (existingItem) {
+                if (existingItem.quantity < product.stock) {
+                    existingItem.quantity++;
+                } else {
+                    alert('No hay suficiente stock disponible');
+                    return;
+                }
+            } else {
+                cart.push({
+                    product: product,
+                    quantity: 1
+                });
+            }
+            
+            updateCart();
+        }
+
+        function updateCart() {
+            const cartItems = document.getElementById('cartItems');
+            
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<p class="text-gray-500 text-center py-4">No hay productos agregados</p>';
+                document.getElementById('cartSubtotal').textContent = `${getCurrencySymbol()}0.00`;
+                document.getElementById('cartTotal').textContent = `${getCurrencySymbol()}0.00`;
+                document.getElementById('changeAmount').textContent = `${getCurrencySymbol()}0.00`;
+                document.getElementById('changeAmount').className = 'text-lg font-bold text-gray-400';
+                return;
+            }
+            
+            cartItems.innerHTML = '';
+            
+            let subtotal = 0;
+            
+            cart.forEach(item => {
+                const itemTotal = item.product.price * item.quantity;
+                subtotal += itemTotal;
+                
+                const cartItem = document.createElement('div');
+                cartItem.className = 'flex justify-between items-center p-2 bg-gray-50 rounded';
+                cartItem.innerHTML = `
+                    <div>
+                        <h4 class="font-medium text-sm">${item.product.name}</h4>
+                        <p class="text-xs text-gray-500">${getCurrencySymbol()}${item.product.price.toFixed(2)} x ${item.quantity}</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-medium text-sm">${getCurrencySymbol()}${itemTotal.toFixed(2)}</span>
+                        <button onclick="removeFromCart('${item.product.id}')" class="text-red-600 hover:text-red-800 font-bold">
+                            ×
+                        </button>
+                    </div>
+                `;
+                cartItems.appendChild(cartItem);
+            });
+            
+            document.getElementById('cartSubtotal').textContent = `${getCurrencySymbol()}${subtotal.toFixed(2)}`;
+            document.getElementById('cartTotal').textContent = `${getCurrencySymbol()}${subtotal.toFixed(2)}`;
+            
+            // Calcular cambio si hay efectivo recibido
+            calculateChange();
+        }
+
+        // NUEVA FUNCIÓN: Calcular el cambio
+        function calculateChange() {
+            const totalText = document.getElementById('cartTotal').textContent;
+            const total = parseFloat(totalText.replace(/[^0-9.-]/g, '')) || 0;
+            const cashReceived = parseFloat(document.getElementById('cashReceived').value) || 0;
+            
+            const change = cashReceived - total;
+            const changeElement = document.getElementById('changeAmount');
+            
+            if (cashReceived === 0) {
+                changeElement.textContent = `${getCurrencySymbol()}0.00`;
+                changeElement.className = 'text-lg font-bold text-gray-400';
+            } else if (change < 0) {
+                changeElement.textContent = `Faltan ${getCurrencySymbol()}${Math.abs(change).toFixed(2)}`;
+                changeElement.className = 'text-lg font-bold text-red-600';
+            } else {
+                changeElement.textContent = `${getCurrencySymbol()}${change.toFixed(2)}`;
+                changeElement.className = 'text-lg font-bold text-green-600';
+            }
+            
+            return { total, cashReceived, change };
+        }
+
+        function removeFromCart(productId) {
+            const itemIndex = cart.findIndex(item => item.product.id === productId);
+            if (itemIndex !== -1) {
+                if (cart[itemIndex].quantity > 1) {
+                    cart[itemIndex].quantity--;
+                } else {
+                    cart.splice(itemIndex, 1);
+                }
+            }
+            updateCart();
+        }
+
+        function clearCart() {
+            if (cart.length === 0) return;
+            if (confirm('¿Estás seguro de vaciar el carrito?')) {
+                cart = [];
+                updateCart();
+                document.getElementById('cashReceived').value = '';
+                document.getElementById('changeAmount').textContent = `${getCurrencySymbol()}0.00`;
+                document.getElementById('changeAmount').className = 'text-lg font-bold text-gray-400';
+            }
+        }
+
+        // MODIFICADA: Procesar pago con cálculo de cambio
+        function checkout() {
+            if (cart.length === 0) {
+                alert('No hay productos en el carrito');
+                return;
+            }
+            
+            // Verificar stock
+            for (const item of cart) {
+                const product = products.find(p => p.id === item.product.id);
+                if (product.stock < item.quantity) {
+                    alert(`No hay suficiente stock de ${product.name}`);
+                    return;
+                }
+            }
+            
+            const subtotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+            const total = subtotal;
+            
+            // Si el método de pago es efectivo, validar el monto recibido
+            let cashReceived = 0;
+            let change = 0;
+            
+            if (currentPaymentMethod === 'efectivo') {
+                cashReceived = parseFloat(document.getElementById('cashReceived').value) || 0;
+                
+                if (cashReceived === 0) {
+                    alert('Por favor, ingrese el efectivo recibido');
+                    document.getElementById('cashReceived').focus();
+                    return;
+                }
+                
+                if (cashReceived < total) {
+                    alert(`El efectivo recibido (${getCurrencySymbol()}${cashReceived.toFixed(2)}) es menor al total (${getCurrencySymbol()}${total.toFixed(2)}).\n\nFaltan: ${getCurrencySymbol()}${(total - cashReceived).toFixed(2)}`);
+                    document.getElementById('cashReceived').focus();
+                    return;
+                }
+                
+                change = cashReceived - total;
+            } else {
+                // Para otros métodos de pago, el monto recibido es igual al total
+                cashReceived = total;
+                change = 0;
+            }
+            
+            // Contar productos
+            const productCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+            
+            // Registrar venta
+            const sale = {
+                id: Date.now().toString(),
+                date: new Date().toISOString(),
+                items: cart.map(item => ({
+                    productId: item.product.id,
+                    name: item.product.name,
+                    price: item.product.price,
+                    quantity: item.quantity
+                })),
+                subtotal: subtotal,
+                tax: 0,
+                total: subtotal,
+                paymentMethod: currentPaymentMethod,
+                currency: currentCurrency,
+                cashReceived: cashReceived,
+                change: change
+            };
+            
+            sales.push(sale);
+            localStorage.setItem('gymSales', JSON.stringify(sales));
+            
+            // Actualizar stock
+            cart.forEach(item => {
+                const productIndex = products.findIndex(p => p.id === item.product.id);
+                if (productIndex !== -1) {
+                    products[productIndex].stock -= item.quantity;
+                }
+            });
+            localStorage.setItem('gymProducts', JSON.stringify(products));
+            
+            // Registrar actividad
+            addActivity('sale_completed', `Venta realizada por ${getCurrencySymbol()}${subtotal.toFixed(2)} (${currentPaymentMethod})`);
+            
+            // Mostrar modal de éxito
+            showSuccessModal(total, cashReceived, change, currentPaymentMethod, productCount);
+            
+            // Limpiar carrito y campos
+            cart = [];
+            updateCart();
+            document.getElementById('cashReceived').value = '';
+            document.getElementById('changeAmount').textContent = `${getCurrencySymbol()}0.00`;
+            document.getElementById('changeAmount').className = 'text-lg font-bold text-gray-400';
+            
+            // Recargar productos para mostrar stock actualizado
+            loadProducts();
+            loadCategories();
+        }
+
+        // NUEVA FUNCIÓN: Mostrar modal de éxito
+        function showSuccessModal(total, cashReceived, change, paymentMethod, productCount) {
+            document.getElementById('successTotal').textContent = `${getCurrencySymbol()}${total.toFixed(2)}`;
+            document.getElementById('successCashReceived').textContent = `${getCurrencySymbol()}${cashReceived.toFixed(2)}`;
+            document.getElementById('successChange').textContent = `${getCurrencySymbol()}${change.toFixed(2)}`;
+            document.getElementById('successPaymentMethod').textContent = 
+                paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1);
+            document.getElementById('successProductCount').textContent = productCount;
+            
+            document.getElementById('successModal').classList.remove('hidden');
+            document.getElementById('successModal').classList.add('flex');
+        }
+
+        // NUEVA FUNCIÓN: Cerrar modal de éxito
+        function closeSuccessModal() {
+            document.getElementById('successModal').classList.add('hidden');
+            document.getElementById('successModal').classList.remove('flex');
+        }
+
+        function saveProduct(e) {
+            e.preventDefault();
+            
+            const productData = {
+                id: editingProductId || Date.now().toString(),
+                name: document.getElementById('productName').value,
+                category: document.getElementById('productCategory').value,
+                price: parseFloat(document.getElementById('productPrice').value),
+                stock: parseInt(document.getElementById('productStock').value),
+                description: document.getElementById('productDescription').value,
+                createdAt: new Date().toISOString()
+            };
+            
+            if (editingProductId) {
+                const index = products.findIndex(p => p.id === editingProductId);
+                products[index] = productData;
+                addActivity('product_updated', `Producto actualizado: ${productData.name}`);
+            } else {
+                products.push(productData);
+                addActivity('product_added', `Nuevo producto agregado: ${productData.name}`);
+            }
+            
+            localStorage.setItem('gymProducts', JSON.stringify(products));
+            closeProductModal();
+            loadProducts();
+            loadCategories();
+        }
+
+        function editProduct(id) {
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+            
+            editingProductId = id;
+            document.getElementById('productModalTitle').textContent = 'Editar Producto';
+            document.getElementById('productName').value = product.name;
+            document.getElementById('productCategory').value = product.category;
+            document.getElementById('productPrice').value = product.price;
+            document.getElementById('productStock').value = product.stock;
+            document.getElementById('productDescription').value = product.description || '';
+            
+            document.getElementById('productModal').classList.remove('hidden');
+            document.getElementById('productModal').classList.add('flex');
+        }
+
+        function deleteProduct(id) {
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+            
+            if (confirm(`¿Estás seguro de eliminar el producto "${product.name}"?`)) {
+                products = products.filter(p => p.id !== id);
+                localStorage.setItem('gymProducts', JSON.stringify(products));
+                addActivity('product_deleted', `Producto eliminado: ${product.name}`);
+                loadProducts();
+                loadCategories();
+            }
+        }
+
+        function closeProductModal() {
+            document.getElementById('productModal').classList.add('hidden');
+            document.getElementById('productModal').classList.remove('flex');
+            editingProductId = null;
+        }
+
+        function viewSales() {
+            document.getElementById('salesModal').classList.remove('hidden');
+            document.getElementById('salesModal').classList.add('flex');
+            document.getElementById('salesDateFilter').value = new Date().toISOString().split('T')[0];
+            filterSales();
+        }
+
+        function closeSalesModal() {
+            document.getElementById('salesModal').classList.add('hidden');
+            document.getElementById('salesModal').classList.remove('flex');
+        }
+
+        function filterSales() {
+            const dateFilter = document.getElementById('salesDateFilter').value;
+            
+            if (dateFilter) {
+                filteredSales = sales.filter(sale => sale.date.split('T')[0] === dateFilter);
+            } else {
+                filteredSales = [...sales];
+            }
+            
+            const salesTable = document.getElementById('salesTable');
+            const salesSummary = document.getElementById('salesSummary');
+            
+            if (filteredSales.length === 0) {
+                salesTable.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                            No hay ventas registradas
+                        </td>
+                    </tr>
+                `;
+                salesSummary.classList.add('hidden');
+                return;
+            }
+            
+            salesSummary.classList.remove('hidden');
+            const totalAmount = filteredSales.reduce((sum, sale) => sum + sale.total, 0);
+            const totalProducts = filteredSales.reduce((sum, sale) => 
+                sum + sale.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0);
+            
+            document.getElementById('summaryTotalSales').textContent = filteredSales.length;
+            document.getElementById('summaryTotalAmount').textContent = `${getCurrencySymbol()}${totalAmount.toFixed(2)}`;
+            document.getElementById('summaryTotalProducts').textContent = totalProducts;
+            
+            salesTable.innerHTML = filteredSales.slice().reverse().map(sale => {
+                const productsList = sale.items.map(item => 
+                    `${item.name} (${item.quantity} x ${getCurrencySymbol()}${item.price.toFixed(2)})`
+                ).join(', ');
+                
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.id.slice(-6)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDateTime(sale.date)}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${productsList}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${getCurrencySymbol()}${sale.total.toFixed(2)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full ${
+                                sale.paymentMethod === 'efectivo' ? 'bg-green-100 text-green-800' :
+                                sale.paymentMethod === 'tarjeta' ? 'bg-blue-100 text-blue-800' :
+                                'bg-purple-100 text-purple-800'
+                            }">
+                                ${sale.paymentMethod}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ============ EXPORT FUNCTIONS ============
+
+        function exportToExcel() {
+            const wb = XLSX.utils.book_new();
+            
+            const data = [
+                ["Nombre", "Email", "Teléfono", "Edad", "Ciudad", "Dirección", "Plan", "Inicio Membresía", "Fin Membresía", "Estado"]
+            ];
+            
+            members.forEach(member => {
+                const isActive = isActiveMember(member);
+                data.push([
+                    member.name,
+                    member.email,
+                    member.phone,
+                    member.age,
+                    member.city,
+                    member.address,
+                    getPlanName(member.membershipPlan),
+                    formatDate(member.membershipStart),
+                    formatDate(member.membershipEnd),
+                    isActive ? "Activo" : "Inactivo"
+                ]);
+            });
+            
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            XLSX.utils.book_append_sheet(wb, ws, "Socios");
+            XLSX.writeFile(wb, `socios_gimnasio_${new Date().toISOString().split('T')[0]}.xlsx`);
+            
+            addActivity('export_excel', 'Exportación de socios a Excel realizada');
+        }
+
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(18);
+            doc.text('Lista de Socios - GymManager Pro', 14, 15);
+            
+            doc.setFontSize(10);
+            doc.text(`Generado: ${new Date().toLocaleString('es-MX')}`, 14, 22);
+            
+            const headers = [["Nombre", "Email", "Teléfono", "Edad", "Plan", "Estado"]];
+            
+            const data = members.map(member => {
+                const isActive = isActiveMember(member);
+                return [
+                    member.name,
+                    member.email,
+                    member.phone,
+                    member.age,
+                    getPlanName(member.membershipPlan),
+                    isActive ? "Activo" : "Inactivo"
+                ];
+            });
+            
+            doc.autoTable({
+                head: headers,
+                body: data,
+                startY: 30,
+                styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
+                headStyles: { fillColor: [31, 41, 55], textColor: 255 },
+                alternateRowStyles: { fillColor: [243, 244, 246] }
+            });
+            
+            doc.save(`socios_gimnasio_${new Date().toISOString().split('T')[0]}.pdf`);
+            addActivity('export_pdf', 'Exportación de socios a PDF realizada');
+        }
+
+        function importFromExcel(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                
+                if (confirm(`¿Desea importar ${jsonData.length} socios desde el archivo Excel?`)) {
+                    const newMembers = jsonData.map(row => {
+                        return {
+                            id: Date.now().toString() + Math.floor(Math.random() * 1000),
+                            name: row['Nombre'] || '',
+                            email: row['Email'] || '',
+                            phone: row['Teléfono']?.toString() || '',
+                            age: parseInt(row['Edad']) || 18,
+                            city: row['Ciudad'] || '',
+                            address: row['Dirección'] || '',
+                            membershipPlan: getPlanKey(row['Plan']),
+                            membershipStart: row['Inicio Membresía'] ? formatDateForImport(row['Inicio Membresía']) : new Date().toISOString().split('T')[0],
+                            membershipEnd: row['Fin Membresía'] ? formatDateForImport(row['Fin Membresía']) : calculateMembershipEnd(new Date().toISOString().split('T')[0], getPlanKey(row['Plan'])),
+                            status: 'active',
+                            createdAt: new Date().toISOString()
+                        };
+                    });
+                    
+                    members = [...members, ...newMembers];
+                    localStorage.setItem('gymMembers', JSON.stringify(members));
+                    addActivity('import_excel', `Importación de ${newMembers.length} socios desde Excel`);
+                    loadMembers();
+                    updateDashboard();
+                    alert('Importación completada con éxito');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+            e.target.value = '';
+        }
+
+        function getPlanKey(planName) {
+            const plans = {
+                'Diario': 'daily',
+                'Semanal': 'weekly',
+                'Quincenal': 'biweekly',
+                'Mensual': 'monthly'
+            };
+            return plans[planName] || 'monthly';
+        }
+
+        function formatDateForImport(dateValue) {
+            if (dateValue instanceof Date) {
+                return dateValue.toISOString().split('T')[0];
+            }
+            if (typeof dateValue === 'number') {
+                const date = new Date(1900, 0, dateValue - 1);
+                return date.toISOString().split('T')[0];
+            }
+            if (typeof dateValue === 'string') {
+                const parsedDate = new Date(dateValue);
+                if (!isNaN(parsedDate.getTime())) {
+                    return parsedDate.toISOString().split('T')[0];
+                }
+            }
+            return new Date().toISOString().split('T')[0];
+        }
+
+        function exportPaymentsToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(18);
+            doc.text('Reporte de Pagos - GymManager Pro', 14, 15);
+            
+            doc.setFontSize(10);
+            doc.text(`Generado: ${new Date().toLocaleString('es-MX')} | Moneda: ${currentCurrency}`, 14, 22);
+            
+            const totalPayments = payments.reduce((sum, payment) => sum + payment.amount, 0);
+            doc.text(`Total de pagos: ${getCurrencySymbol()}${totalPayments.toFixed(2)}`, 14, 29);
+            
+            const headers = [["Socio", "Plan", "Monto", "Fecha", "Estado"]];
+            
+            const data = payments.map(payment => {
+                const member = members.find(m => m.id === payment.memberId);
+                const memberName = member ? member.name : 'Socio eliminado';
+                return [
+                    memberName,
+                    getPlanName(payment.plan),
+                    `${getCurrencySymbol()}${payment.amount.toFixed(2)}`,
+                    formatDate(payment.date),
+                    "Pagado"
+                ];
+            }).reverse();
+            
+            doc.autoTable({
+                head: headers,
+                body: data,
+                startY: 35,
+                styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
+                headStyles: { fillColor: [31, 41, 55], textColor: 255 },
+                alternateRowStyles: { fillColor: [243, 244, 246] }
+            });
+            
+            doc.save(`pagos_gimnasio_${new Date().toISOString().split('T')[0]}.pdf`);
+            addActivity('export_pdf', 'Exportación de pagos a PDF realizada');
+        }
+
+        // ============ SELECTION FUNCTIONS ============
+
+        function toggleMemberSelection(memberId, checkbox) {
+            if (checkbox.checked) {
+                if (!selectedMembers.includes(memberId)) {
+                    selectedMembers.push(memberId);
+                }
+            } else {
+                selectedMembers = selectedMembers.filter(id => id !== memberId);
+                document.getElementById('selectAllMembers').checked = false;
+            }
+            updateBulkDeleteButtonState();
+        }
+
+        function toggleSelectAllMembers(e) {
+            const checkboxes = document.querySelectorAll('.member-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = e.target.checked;
+                const memberId = checkbox.dataset.id;
+                if (e.target.checked) {
+                    if (!selectedMembers.includes(memberId)) {
+                        selectedMembers.push(memberId);
+                    }
+                } else {
+                    selectedMembers = selectedMembers.filter(id => id !== memberId);
+                }
+            });
+            updateBulkDeleteButtonState();
+        }
+
+        function updateBulkDeleteButtonState() {
+            const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+            if (selectedMembers.length > 0) {
+                bulkDeleteBtn.disabled = false;
+                bulkDeleteBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                bulkDeleteBtn.disabled = true;
+                bulkDeleteBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        function openBulkDeleteModal() {
+            if (selectedMembers.length === 0) return;
+            const message = `¿Estás seguro de que deseas eliminar ${selectedMembers.length} socio(s) seleccionado(s)? Esta acción no se puede deshacer.`;
+            document.getElementById('bulkDeleteMessage').textContent = message;
+            document.getElementById('bulkDeleteModal').classList.remove('hidden');
+            document.getElementById('bulkDeleteModal').classList.add('flex');
+        }
+
+        function closeBulkDeleteModal() {
+            document.getElementById('bulkDeleteModal').classList.add('hidden');
+            document.getElementById('bulkDeleteModal').classList.remove('flex');
+        }
+
+        function confirmBulkDelete() {
+            if (selectedMembers.length === 0) {
+                closeBulkDeleteModal();
+                return;
+            }
+            
+            const membersToDelete = members.filter(member => selectedMembers.includes(member.id));
+            const memberNames = membersToDelete.map(member => member.name).join(', ');
+            
+            members = members.filter(member => !selectedMembers.includes(member.id));
+            localStorage.setItem('gymMembers', JSON.stringify(members));
+            
+            addActivity('members_bulk_deleted', `Eliminación masiva de ${selectedMembers.length} socios: ${memberNames}`);
+            
+            selectedMembers = [];
+            document.getElementById('selectAllMembers').checked = false;
+            
+            closeBulkDeleteModal();
+            loadMembers();
+            updateDashboard();
+            
+            alert(`Se eliminaron ${membersToDelete.length} socio(s) correctamente.`);
+        }
+
+        function togglePaymentSelection(paymentId, checkbox) {
+            if (checkbox.checked) {
+                if (!selectedPayments.includes(paymentId)) {
+                    selectedPayments.push(paymentId);
+                }
+            } else {
+                selectedPayments = selectedPayments.filter(id => id !== paymentId);
+                document.getElementById('selectAllPayments').checked = false;
+            }
+            updateBulkDeletePaymentsButtonState();
+            updateSelectedPaymentsCount();
+        }
+
+        function toggleSelectAllPayments(e) {
+            const checkboxes = document.querySelectorAll('.payment-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = e.target.checked;
+                const paymentId = checkbox.dataset.id;
+                if (e.target.checked) {
+                    if (!selectedPayments.includes(paymentId)) {
+                        selectedPayments.push(paymentId);
+                    }
+                } else {
+                    selectedPayments = selectedPayments.filter(id => id !== paymentId);
+                }
+            });
+            updateBulkDeletePaymentsButtonState();
+            updateSelectedPaymentsCount();
+        }
+
+        function updateBulkDeletePaymentsButtonState() {
+            const bulkDeleteBtn = document.getElementById('bulkDeletePaymentsBtn');
+            if (selectedPayments.length > 0) {
+                bulkDeleteBtn.disabled = false;
+                bulkDeleteBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                bulkDeleteBtn.disabled = true;
+                bulkDeleteBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        function updateSelectedPaymentsCount() {
+            const countElement = document.getElementById('selectedPaymentsCount');
+            if (selectedPayments.length > 0) {
+                countElement.textContent = `${selectedPayments.length} pago(s) seleccionado(s)`;
+                countElement.classList.remove('hidden');
+            } else {
+                countElement.classList.add('hidden');
+            }
+        }
+
+        function openBulkDeletePaymentsModal() {
+            if (selectedPayments.length === 0) return;
+            const message = `¿Estás seguro de que deseas eliminar ${selectedPayments.length} pago(s) seleccionado(s)? Esta acción no se puede deshacer.`;
+            document.getElementById('bulkDeletePaymentsMessage').textContent = message;
+            document.getElementById('bulkDeletePaymentsModal').classList.remove('hidden');
+            document.getElementById('bulkDeletePaymentsModal').classList.add('flex');
+        }
+
+        function closeBulkDeletePaymentsModal() {
+            document.getElementById('bulkDeletePaymentsModal').classList.add('hidden');
+            document.getElementById('bulkDeletePaymentsModal').classList.remove('flex');
+        }
+
+        function confirmBulkDeletePayments() {
+            if (selectedPayments.length === 0) {
+                closeBulkDeletePaymentsModal();
+                return;
+            }
+            
+            const paymentsToDelete = payments.filter(payment => selectedPayments.includes(payment.id));
+            
+            payments = payments.filter(payment => !selectedPayments.includes(payment.id));
+            localStorage.setItem('gymPayments', JSON.stringify(payments));
+            
+            addActivity('payments_bulk_deleted', `Eliminación masiva de ${selectedPayments.length} pagos`);
+            
+            selectedPayments = [];
+            document.getElementById('selectAllPayments').checked = false;
+            
+            closeBulkDeletePaymentsModal();
+            loadPayments();
+            updateSelectedPaymentsCount();
+            
+            alert(`Se eliminaron ${paymentsToDelete.length} pago(s) correctamente.`);
+        }
+
+        function editPayment(id) {
+            const payment = payments.find(p => p.id === id);
+            if (!payment) return;
+            
+            editingPaymentId = id;
+            
+            document.getElementById('editPaymentId').value = payment.id;
+            document.getElementById('editPaymentMember').value = payment.memberId;
+            document.getElementById('editPaymentPlan').value = payment.plan;
+            document.getElementById('editPaymentAmount').value = payment.amount;
+            document.getElementById('editPaymentDate').value = payment.date;
+            
+            const memberSelect = document.getElementById('editPaymentMember');
+            memberSelect.innerHTML = '<option value="">Seleccionar socio</option>';
+            
+            members.forEach(member => {
+                const selected = member.id === payment.memberId ? 'selected' : '';
+                memberSelect.innerHTML += `<option value="${member.id}" ${selected}>${member.name}</option>`;
+            });
+            
+            document.getElementById('editPaymentModal').classList.remove('hidden');
+            document.getElementById('editPaymentModal').classList.add('flex');
+        }
+
+        function closeEditPaymentModal() {
+            document.getElementById('editPaymentModal').classList.add('hidden');
+            document.getElementById('editPaymentModal').classList.remove('flex');
+            editingPaymentId = null;
+        }
+
+        function updatePayment(e) {
+            e.preventDefault();
+            
+            const paymentData = {
+                id: editingPaymentId,
+                memberId: document.getElementById('editPaymentMember').value,
+                plan: document.getElementById('editPaymentPlan').value,
+                amount: parseFloat(document.getElementById('editPaymentAmount').value),
+                date: document.getElementById('editPaymentDate').value,
+                currency: currentCurrency
+            };
+            
+            const index = payments.findIndex(p => p.id === editingPaymentId);
+            if (index !== -1) {
+                paymentData.createdAt = payments[index].createdAt;
+                payments[index] = paymentData;
+                localStorage.setItem('gymPayments', JSON.stringify(payments));
+                
+                const member = members.find(m => m.id === paymentData.memberId);
+                addActivity('payment_updated', `Pago actualizado: ${getCurrencySymbol()}${paymentData.amount} - ${member ? member.name : 'Socio desconocido'}`);
+                
+                closeEditPaymentModal();
+                loadPayments();
+            }
+        }
+
+        function deletePayment(id) {
+            deletingPaymentId = id;
+            const payment = payments.find(p => p.id === id);
+            
+            if (!payment) return;
+            
+            const member = members.find(m => m.id === payment.memberId);
+            const message = `¿Estás seguro de que deseas eliminar el pago de ${member ? member.name : 'socio desconocido'} por ${getCurrencySymbol()}${payment.amount}?`;
+            
+            document.getElementById('deletePaymentMessage').textContent = message;
+            document.getElementById('deletePaymentModal').classList.remove('hidden');
+            document.getElementById('deletePaymentModal').classList.add('flex');
+        }
+
+        function closeDeletePaymentModal() {
+            document.getElementById('deletePaymentModal').classList.add('hidden');
+            document.getElementById('deletePaymentModal').classList.remove('flex');
+            deletingPaymentId = null;
+        }
+
+        function confirmDeletePayment() {
+            if (!deletingPaymentId) {
+                closeDeletePaymentModal();
+                return;
+            }
+            
+            const paymentIndex = payments.findIndex(p => p.id === deletingPaymentId);
+            if (paymentIndex === -1) {
+                closeDeletePaymentModal();
+                return;
+            }
+            
+            const deletedPayment = payments[paymentIndex];
+            const member = members.find(m => m.id === deletedPayment.memberId);
+            
+            payments.splice(paymentIndex, 1);
+            localStorage.setItem('gymPayments', JSON.stringify(payments));
+            
+            addActivity('payment_deleted', `Pago eliminado: ${getCurrencySymbol()}${deletedPayment.amount} - ${member ? member.name : 'Socio desconocido'}`);
+            
+            closeDeletePaymentModal();
+            loadPayments();
+            
+            alert('Pago eliminado correctamente.');
+        }
+
+        function toggleMemberStatus(id, status) {
+            const memberIndex = members.findIndex(m => m.id === id);
+            if (memberIndex === -1) return;
+            
+            const currentStatus = members[memberIndex].status || (isActiveMember(members[memberIndex]) ? 'active' : 'inactive');
+            
+            if (currentStatus === status) return;
+            
+            members[memberIndex].status = status;
+            localStorage.setItem('gymMembers', JSON.stringify(members));
+            
+            const action = status === 'active' ? 'activado' : 'desactivado';
+            addActivity('member_updated', `Socio ${action}: ${members[memberIndex].name}`);
+            
+            loadMembers();
+            updateDashboard();
+        }
+
+        // ============ SALES EXPORT FUNCTIONS ============
+
+        function exportVisibleSalesPDF() {
+            if (filteredSales.length === 0) {
+                alert('No hay ventas visibles para exportar');
+                return;
+            }
+            generateSalesPDF(filteredSales, 'ventas_visibles');
+        }
+
+        function exportAllSalesPDF() {
+            if (sales.length === 0) {
+                alert('No hay ventas registradas para exportar');
+                return;
+            }
+            generateSalesPDF(sales, 'historial_ventas_completo');
+        }
+
+        function exportSalesPDF() {
+            if (sales.length === 0) {
+                alert('No hay ventas registradas para exportar');
+                return;
+            }
+            generateSalesPDF(sales, 'reporte_ventas_pos');
+        }
+
+        function generateSalesPDF(salesData, filename) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(18);
+            doc.setTextColor(31, 41, 55);
+            doc.text('Reporte de Ventas - Punto de Venta', 14, 15);
+            
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Generado: ${new Date().toLocaleString('es-MX')}`, 14, 22);
+            
+            const totalSales = salesData.length;
+            const totalAmount = salesData.reduce((sum, sale) => sum + sale.total, 0);
+            const totalProducts = salesData.reduce((sum, sale) => 
+                sum + sale.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0);
+            
+            doc.setFontSize(12);
+            doc.setTextColor(31, 41, 55);
+            doc.text(`Total de Ventas: ${totalSales}`, 14, 32);
+            doc.text(`Monto Total: ${getCurrencySymbol()}${totalAmount.toFixed(2)}`, 14, 39);
+            doc.text(`Productos Vendidos: ${totalProducts}`, 14, 46);
+            
+            const headers = [["ID", "Fecha", "Productos", "Total", "Método"]];
+            
+            const tableData = salesData.map(sale => {
+                const productsList = sale.items.map(item => 
+                    `${item.name} (${item.quantity})`
+                ).join(', ');
+                
+                return [
+                    sale.id.slice(-6),
+                    formatDate(sale.date),
+                    productsList,
+                    `${getCurrencySymbol()}${sale.total.toFixed(2)}`,
+                    sale.paymentMethod
+                ];
+            });
+            
+            doc.autoTable({
+                head: headers,
+                body: tableData,
+                startY: 55,
+                theme: 'grid',
+                styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
+                headStyles: { fillColor: [31, 41, 55], textColor: 255, fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [243, 244, 246] },
+                columnStyles: {
+                    3: { cellWidth: 'auto', halign: 'right' },
+                    4: { cellWidth: 25 }
+                }
+            });
+            
+            doc.save(`${filename}_${new Date().toISOString().split('T')[0]}.pdf`);
+            addActivity('export_sales_pdf', `Exportación de reporte de ventas: ${filename}`);
+        }
+
+        // ============ SETTINGS FUNCTIONS ============
+
+        function loadSettingsData() {
+            document.getElementById('settingsTotalMembers').textContent = members.length;
+            
+            const activeMembers = members.filter(m => {
+                const status = m.status || (isActiveMember(m) ? 'active' : 'inactive');
+                return status === 'active';
+            }).length;
+            
+            document.getElementById('settingsActiveMembers').textContent = activeMembers;
+            document.getElementById('settingsInactiveMembers').textContent = members.length - activeMembers;
+            document.getElementById('settingsTotalPayments').textContent = payments.length;
+            
+            const symbol = getCurrencySymbol();
+            document.getElementById('settingsDailyPrice').textContent = `${symbol}${prices.daily}`;
+            document.getElementById('settingsWeeklyPrice').textContent = `${symbol}${prices.weekly}`;
+            document.getElementById('settingsBiweeklyPrice').textContent = `${symbol}${prices.biweekly}`;
+            document.getElementById('settingsMonthlyPrice').textContent = `${symbol}${prices.monthly}`;
+            
+            document.getElementById('settingsTotalProducts').textContent = products.length;
+            document.getElementById('settingsTotalSales').textContent = sales.length;
+            
+            const salesRevenue = sales.reduce((total, sale) => total + sale.total, 0);
+            document.getElementById('settingsSalesRevenue').textContent = `${getCurrencySymbol()}${salesRevenue.toFixed(2)}`;
+            
+            const productSales = {};
+            sales.forEach(sale => {
+                sale.items.forEach(item => {
+                    if (!productSales[item.name]) {
+                        productSales[item.name] = 0;
+                    }
+                    productSales[item.name] += item.quantity;
+                });
+            });
+            
+            let bestSellingProduct = 'N/A';
+            let maxSales = 0;
+            
+            Object.keys(productSales).forEach(productName => {
+                if (productSales[productName] > maxSales) {
+                    maxSales = productSales[productName];
+                    bestSellingProduct = productName;
+                }
+            });
+            
+            document.getElementById('settingsBestSellingProduct').textContent = bestSellingProduct;
+            
+            const paymentMethods = {};
+            sales.forEach(sale => {
+                if (!paymentMethods[sale.paymentMethod]) {
+                    paymentMethods[sale.paymentMethod] = 0;
+                }
+                paymentMethods[sale.paymentMethod]++;
+            });
+            
+            const paymentMethodsContainer = document.getElementById('settingsPaymentMethods');
+            paymentMethodsContainer.innerHTML = '';
+            
+            if (Object.keys(paymentMethods).length === 0) {
+                paymentMethodsContainer.innerHTML = '<p class="text-gray-500">No hay datos de ventas</p>';
+            } else {
+                Object.keys(paymentMethods).forEach(method => {
+                    const div = document.createElement('div');
+                    div.className = 'flex justify-between';
+                    div.innerHTML = `
+                        <span class="text-gray-600">${method.charAt(0).toUpperCase() + method.slice(1)}:</span>
+                        <span class="font-medium">${paymentMethods[method]} ventas</span>
+                    `;
+                    paymentMethodsContainer.appendChild(div);
+                });
+            }
+            
+            document.getElementById('currentCurrencyDisplay').textContent = 
+                `${currentCurrency} (${getCurrencySymbol()})`;
+            
+            calculateTotalDataSize();
+        }
+
+        function calculateTotalDataSize() {
+            const allData = {
+                members: JSON.stringify(members),
+                payments: JSON.stringify(payments),
+                activities: JSON.stringify(activities),
+                products: JSON.stringify(products),
+                sales: JSON.stringify(sales),
+                prices: JSON.stringify(prices)
+            };
+            
+            let totalSize = 0;
+            Object.values(allData).forEach(data => {
+                totalSize += new Blob([data]).size;
+            });
+            
+            let sizeText;
+            if (totalSize < 1024) {
+                sizeText = `${totalSize} bytes`;
+            } else if (totalSize < 1048576) {
+                sizeText = `${(totalSize / 1024).toFixed(2)} KB`;
+            } else {
+                sizeText = `${(totalSize / 1048576).toFixed(2)} MB`;
+            }
+            
+            document.getElementById('totalDataSize').textContent = sizeText;
+        }
+
+        function openExportAllDataModal() {
+            document.getElementById('exportAllDataModal').classList.remove('hidden');
+            document.getElementById('exportAllDataModal').classList.add('flex');
+        }
+
+        function closeExportAllDataModal() {
+            document.getElementById('exportAllDataModal').classList.add('hidden');
+            document.getElementById('exportAllDataModal').classList.remove('flex');
+        }
+
+        function exportAllDataPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(18);
+            doc.setTextColor(31, 41, 55);
+            doc.text('Reporte Completo del Sistema - Gimnasio', 14, 15);
+            
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Generado: ${new Date().toLocaleString('es-MX')}`, 14, 22);
+            doc.text(`Versión: N.O.V.A v2.0`, 14, 28);
+            
+            doc.setFontSize(12);
+            doc.setTextColor(31, 41, 55);
+            doc.text('RESUMEN ESTADÍSTICO', 14, 40);
+            
+            const activeMembers = members.filter(m => {
+                const status = m.status || (isActiveMember(m) ? 'active' : 'inactive');
+                return status === 'active';
+            }).length;
+            
+            const salesRevenue = sales.reduce((total, sale) => total + sale.total, 0);
+            
+            const stats = [
+                [`Total Socios:`, members.length],
+                [`Socios Activos:`, activeMembers],
+                [`Socios Inactivos:`, members.length - activeMembers],
+                [`Total Pagos:`, payments.length],
+                [`Total Productos:`, products.length],
+                [`Total Ventas:`, sales.length],
+                [`Ingresos por Ventas:`, `${getCurrencySymbol()}${salesRevenue.toFixed(2)}`]
+            ];
+            
+            let yPosition = 50;
+            stats.forEach(([label, value], index) => {
+                doc.text(`${label} ${value}`, 14, yPosition + (index * 6));
+            });
+            
+            yPosition += stats.length * 6 + 10;
+            doc.setFontSize(12);
+            doc.setTextColor(31, 41, 55);
+            doc.text('PRECIOS ACTUALES DE MEMBRESÍAS', 14, yPosition);
+            
+            const membershipPrices = [
+                ['Plan Diario:', `${getCurrencySymbol()}${prices.daily}`],
+                ['Plan Semanal:', `${getCurrencySymbol()}${prices.weekly}`],
+                ['Plan Quincenal:', `${getCurrencySymbol()}${prices.biweekly}`],
+                ['Plan Mensual:', `${getCurrencySymbol()}${prices.monthly}`]
+            ];
+            
+            yPosition += 8;
+            membershipPrices.forEach(([plan, price], index) => {
+                doc.text(`${plan} ${price}`, 14, yPosition + (index * 6));
+            });
+            
+            doc.save(`reporte_completo_sistema_${new Date().toISOString().split('T')[0]}.pdf`);
+            closeExportAllDataModal();
+            addActivity('export_all_data', 'Exportación completa de todos los datos del sistema');
+        }
+
+        function openResetSystemModal() {
+            document.getElementById('resetSystemModal').classList.remove('hidden');
+            document.getElementById('resetSystemModal').classList.add('flex');
+        }
+
+        function closeResetSystemModal() {
+            document.getElementById('resetSystemModal').classList.add('hidden');
+            document.getElementById('resetSystemModal').classList.remove('flex');
+            document.getElementById('confirmResetCheckbox').checked = false;
+            document.getElementById('confirmResetBtn').disabled = true;
+        }
+
+        function resetSystem() {
+            if (!document.getElementById('confirmResetCheckbox').checked) return;
+            
+            members = [];
+            payments = [];
+            activities = [];
+            products = [];
+            sales = [];
+            prices = { "daily": 50, "weekly": 300, "biweekly": 550, "monthly": 1000 };
+            
+            localStorage.removeItem('gymMembers');
+            localStorage.removeItem('gymPayments');
+            localStorage.removeItem('gymActivities');
+            localStorage.removeItem('gymProducts');
+            localStorage.removeItem('gymSales');
+            localStorage.removeItem('gymPrices');
+            
+            cart = [];
+            
+            addActivity('system_reset', 'Sistema reiniciado - Todos los datos fueron eliminados');
+            
+            closeResetSystemModal();
+            
+            loadMembers();
+            loadPayments();
+            loadActivities();
+            
+            if (!document.getElementById('settings').classList.contains('hidden')) {
+                loadSettingsData();
+            }
+            
+            alert('El sistema ha sido reiniciado correctamente. Todos los datos han sido eliminados.');
+        }
+
+        function filterPayments() {
+            const dateFrom = document.getElementById('paymentDateFromFilter').value;
+            const dateTo = document.getElementById('paymentDateToFilter').value;
+            
+            let filtered = payments;
+            
+            if (dateFrom) {
+                filtered = filtered.filter(payment => payment.date >= dateFrom);
+            }
+            
+            if (dateTo) {
+                filtered = filtered.filter(payment => payment.date <= dateTo);
+            }
+            
+            renderPaymentsTable(filtered.reverse());
+        }
+
+        function clearPaymentFilters() {
+            document.getElementById('paymentDateFromFilter').value = '';
+            document.getElementById('paymentDateToFilter').value = '';
+            loadPayments();
+        }
+    </script>
+</body>
+</html>
