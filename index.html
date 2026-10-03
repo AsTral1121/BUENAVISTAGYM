@@ -136,6 +136,49 @@
         #changeAmount.zero {
             color: #9ca3af;
         }
+
+        /* Estilos para el buscador de socios */
+        .member-search-wrapper {
+            position: relative;
+        }
+        .member-search-wrapper .search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            pointer-events: none;
+        }
+        .member-search-wrapper input {
+            padding-left: 35px;
+        }
+        .member-search-wrapper .clear-search {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            cursor: pointer;
+            display: none;
+        }
+        .member-search-wrapper .clear-search:hover {
+            color: #ef4444;
+        }
+        .member-search-wrapper input:not(:placeholder-shown) + .clear-search {
+            display: block;
+        }
+
+        /* Estilos para el modal de edición de precios */
+        #editPriceModal .modal-content {
+            animation: slideDown 0.3s ease-out;
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .price-input:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -179,6 +222,9 @@
                 </button>
                 <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gym-secondary" data-section="pos">
                     Punto de Venta
+                </button>
+                <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gym-secondary" data-section="cortes">
+                    Cortes
                 </button>
                 <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gym-secondary" data-section="settings">
                     Configuración
@@ -334,28 +380,28 @@
                     <h3 class="text-lg font-semibold text-gym-primary mb-2">Plan Diario</h3>
                     <div class="flex items-center justify-between">
                         <span class="text-2xl font-bold text-gym-accent" id="dailyPrice">$50</span>
-                        <button class="text-gym-secondary hover:text-blue-600" onclick="editPrice('daily')">✏️</button>
+                        <button class="text-gym-secondary hover:text-blue-600" onclick="openEditPriceModal('daily')">✏️</button>
                     </div>
                 </div>
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <h3 class="text-lg font-semibold text-gym-primary mb-2">Plan Semanal</h3>
                     <div class="flex items-center justify-between">
                         <span class="text-2xl font-bold text-gym-accent" id="weeklyPrice">$300</span>
-                        <button class="text-gym-secondary hover:text-blue-600" onclick="editPrice('weekly')">✏️</button>
+                        <button class="text-gym-secondary hover:text-blue-600" onclick="openEditPriceModal('weekly')">✏️</button>
                     </div>
                 </div>
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <h3 class="text-lg font-semibold text-gym-primary mb-2">Plan Quincenal</h3>
                     <div class="flex items-center justify-between">
                         <span class="text-2xl font-bold text-gym-accent" id="biweeklyPrice">$550</span>
-                        <button class="text-gym-secondary hover:text-blue-600" onclick="editPrice('biweekly')">✏️</button>
+                        <button class="text-gym-secondary hover:text-blue-600" onclick="openEditPriceModal('biweekly')">✏️</button>
                     </div>
                 </div>
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <h3 class="text-lg font-semibold text-gym-primary mb-2">Plan Mensual</h3>
                     <div class="flex items-center justify-between">
                         <span class="text-2xl font-bold text-gym-accent" id="monthlyPrice">$1000</span>
-                        <button class="text-gym-secondary hover:text-blue-600" onclick="editPrice('monthly')">✏️</button>
+                        <button class="text-gym-secondary hover:text-blue-600" onclick="openEditPriceModal('monthly')">✏️</button>
                     </div>
                 </div>
             </div>
@@ -541,6 +587,112 @@
             </div>
         </section>
 
+        <!-- Cortes Section -->
+        <section id="cortes" class="section hidden">
+            <h2 class="text-3xl font-bold text-gym-primary mb-8">Cortes de Caja</h2>
+
+            <!-- Configuración del Corte -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="text-xl font-semibold text-gym-primary mb-4">Configurar Corte</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Corte</label>
+                        <select id="corteTipo" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                            <option value="diario">Diario</option>
+                            <option value="semanal">Semanal</option>
+                            <option value="quincenal">Quincenal</option>
+                            <option value="mensual">Mensual</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Referencia</label>
+                        <input type="date" id="corteFechaReferencia" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Caja Inicial</label>
+                        <input type="number" id="cajaInicial" min="0" step="0.01" value="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                    </div>
+                    <div class="flex items-end">
+                        <button id="generarCorteBtn" class="w-full bg-gym-secondary text-white px-4 py-2 rounded-md hover:bg-blue-600 transition duration-200">
+                            Generar Corte
+                        </button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Rango Desde</label>
+                        <input type="date" id="corteFechaDesde" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary" readonly>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Rango Hasta</label>
+                        <input type="date" id="corteFechaHasta" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary" readonly>
+                    </div>
+                    <div class="flex items-end">
+                        <button id="exportCortePDFBtn" class="w-full bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition duration-200">
+                            Exportar Corte a PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resultados del Corte -->
+            <div id="corteResultados" class="hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+                        <h3 class="text-sm font-medium text-gray-500 mb-1">Caja Inicial</h3>
+                        <p class="text-2xl font-bold text-gray-900" id="corteCajaInicial">$0.00</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+                        <h3 class="text-sm font-medium text-gray-500 mb-1">Ingresos Totales</h3>
+                        <p class="text-2xl font-bold text-green-600" id="corteIngresosTotales">$0.00</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
+                        <h3 class="text-sm font-medium text-gray-500 mb-1">Egresos (Cambios)</h3>
+                        <p class="text-2xl font-bold text-red-600" id="corteEgresosTotales">$0.00</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
+                        <h3 class="text-sm font-medium text-gray-500 mb-1">Caja Final</h3>
+                        <p class="text-2xl font-bold text-purple-600" id="corteCajaFinal">$0.00</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-gym-accent">
+                        <h3 class="text-sm font-medium text-gray-500 mb-1">Ganancia del Período</h3>
+                        <p class="text-2xl font-bold text-gym-accent" id="corteGanancia">$0.00</p>
+                        <p class="text-xs text-gray-500 mt-1">Caja Final - Caja Inicial</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-yellow-500">
+                        <h3 class="text-sm font-medium text-gray-500 mb-1">Total Ventas POS</h3>
+                        <p class="text-2xl font-bold text-yellow-600" id="corteTotalVentasPOS">$0.00</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-indigo-500">
+                        <h3 class="text-sm font-medium text-gray-500 mb-1">Total Pagos Membresías</h3>
+                        <p class="text-2xl font-bold text-indigo-600" id="corteTotalPagosMembresias">$0.00</p>
+                    </div>
+                </div>
+
+                <!-- Detalle de Movimientos -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <h3 class="text-xl font-semibold text-gym-primary mb-4">Detalle de Movimientos</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Concepto</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Método</th>
+                                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="corteDetalleTable" class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Settings Section -->
         <section id="settings" class="section hidden">
             <div class="flex justify-between items-center mb-8">
@@ -560,11 +712,11 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <span class="font-medium">Versión del Sistema:</span>
-                        <span class="ml-2" id="systemVersion">N.O.V.A v2.0</span>
+                        <span class="ml-2" id="systemVersion">N.O.V.A v2.0.1</span>
                     </div>
                     <div>
                         <span class="font-medium">Última Actualización:</span>
-                        <span class="ml-2" id="lastUpdate">15/03/2024</span>
+                        <span class="ml-2" id="lastUpdate">03/10/2026</span>
                     </div>
                     <div>
                         <span class="font-medium">Total de Datos Almacenados:</span>
@@ -681,6 +833,45 @@
         </section>
     </main>
 
+    <!-- Modal de Edición de Precios (MODAL DEL SISTEMA) -->
+    <div id="editPriceModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="modal-content bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gym-primary" id="editPriceModalTitle">Editar Precio</h3>
+            </div>
+            <form id="editPriceForm" class="px-6 py-4">
+                <input type="hidden" id="editPricePlan">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Plan</label>
+                        <input type="text" id="editPricePlanName" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50" disabled>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Precio Actual</label>
+                        <div class="text-2xl font-bold text-gym-accent" id="editPriceCurrentValue">$0</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nuevo Precio *</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium" id="editPriceCurrencySymbol">$</span>
+                            <input type="number" id="editPriceNewValue" required min="0.01" step="0.01" 
+                                   class="price-input w-full pl-8 pr-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary text-lg font-bold"
+                                   placeholder="0.00">
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" id="cancelEditPriceBtn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-gym-secondary text-white rounded-md hover:bg-blue-600">
+                        Guardar Precio
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Member Modal -->
     <div id="memberModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
         <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
@@ -769,6 +960,17 @@
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Socio *</label>
+                        <!-- Buscador de socios con lupa -->
+                        <div class="member-search-wrapper mb-2">
+                            <span class="search-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </span>
+                            <input type="text" id="paymentMemberSearch" placeholder="Buscar socio por nombre..." 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                            <span class="clear-search" id="clearPaymentMemberSearch">✕</span>
+                        </div>
                         <select id="paymentMember" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
                             <option value="">Seleccionar socio</option>
                         </select>
@@ -1122,6 +1324,12 @@
         let currentCurrency = localStorage.getItem('gymCurrency') || 'MXN';
         let editingMemberId = null;
 
+        // Variables para Cortes
+        let lastCorteData = null;
+
+        // Variables para Edición de Precios
+        let editingPricePlan = null;
+
         // Initialize app
         document.addEventListener('DOMContentLoaded', function() {
             initializeApp();
@@ -1137,6 +1345,9 @@
             document.getElementById('currencySelect').value = currentCurrency;
             document.getElementById('membershipStart').value = new Date().toISOString().split('T')[0];
             document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
+
+            // Inicializar fecha de referencia para cortes
+            document.getElementById('corteFechaReferencia').value = new Date().toISOString().split('T')[0];
         }
 
         function setupEventListeners() {
@@ -1219,6 +1430,8 @@
                 loadMembersToPaymentSelect();
                 document.getElementById('paymentForm').reset();
                 document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
+                // Limpiar buscador al abrir el modal
+                document.getElementById('paymentMemberSearch').value = '';
                 document.getElementById('paymentModal').classList.remove('hidden');
                 document.getElementById('paymentModal').classList.add('flex');
             });
@@ -1289,7 +1502,122 @@
             document.getElementById('successModal').addEventListener('click', (e) => {
                 if (e.target === e.currentTarget) closeSuccessModal();
             });
+
+            // Buscador de socios en el modal de pagos
+            const searchInput = document.getElementById('paymentMemberSearch');
+            const clearSearchBtn = document.getElementById('clearPaymentMemberSearch');
+            
+            if (searchInput) {
+                searchInput.addEventListener('input', filterPaymentMembers);
+            }
+            if (clearSearchBtn) {
+                clearSearchBtn.addEventListener('click', function() {
+                    searchInput.value = '';
+                    filterPaymentMembers();
+                    searchInput.focus();
+                });
+            }
+
+            // Cortes event listeners
+            document.getElementById('corteTipo').addEventListener('change', actualizarRangoFechasCorte);
+            document.getElementById('corteFechaReferencia').addEventListener('change', actualizarRangoFechasCorte);
+            document.getElementById('generarCorteBtn').addEventListener('click', generarCorte);
+            document.getElementById('exportCortePDFBtn').addEventListener('click', exportCortePDF);
+
+            // Event listeners para el modal de edición de precios (MODAL DEL SISTEMA)
+            document.getElementById('editPriceForm').addEventListener('submit', saveEditedPrice);
+            document.getElementById('cancelEditPriceBtn').addEventListener('click', closeEditPriceModal);
+            document.getElementById('editPriceModal').addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) closeEditPriceModal();
+            });
         }
+
+        // ============ FUNCIONES PARA EDICIÓN DE PRECIOS (MODAL DEL SISTEMA) ============
+
+        function openEditPriceModal(plan) {
+            editingPricePlan = plan;
+            const currentPrice = prices[plan];
+            const symbol = getCurrencySymbol();
+            const planName = getPlanName(plan);
+
+            document.getElementById('editPriceModalTitle').textContent = `Editar Precio - Plan ${planName}`;
+            document.getElementById('editPricePlan').value = plan;
+            document.getElementById('editPricePlanName').value = `Plan ${planName}`;
+            document.getElementById('editPriceCurrentValue').textContent = `${symbol}${currentPrice}`;
+            document.getElementById('editPriceCurrencySymbol').textContent = symbol;
+            document.getElementById('editPriceNewValue').value = currentPrice;
+            
+            document.getElementById('editPriceModal').classList.remove('hidden');
+            document.getElementById('editPriceModal').classList.add('flex');
+            
+            // Enfocar el input después de un pequeño delay
+            setTimeout(() => {
+                const input = document.getElementById('editPriceNewValue');
+                input.focus();
+                input.select();
+            }, 100);
+        }
+
+        function closeEditPriceModal() {
+            document.getElementById('editPriceModal').classList.add('hidden');
+            document.getElementById('editPriceModal').classList.remove('flex');
+            editingPricePlan = null;
+        }
+
+        function saveEditedPrice(e) {
+            e.preventDefault();
+            
+            if (!editingPricePlan) return;
+            
+            const newPrice = parseFloat(document.getElementById('editPriceNewValue').value);
+            
+            if (isNaN(newPrice) || newPrice <= 0) {
+                alert('Por favor, ingrese un precio válido mayor a cero.');
+                return;
+            }
+            
+            const oldPrice = prices[editingPricePlan];
+            prices[editingPricePlan] = newPrice;
+            
+            // Guardar en localStorage (persistencia)
+            localStorage.setItem('gymPrices', JSON.stringify(prices));
+            
+            // Actualizar la visualización
+            updatePriceDisplay();
+            
+            // Registrar actividad
+            addActivity('price_updated', `Precio actualizado: Plan ${getPlanName(editingPricePlan)} - ${getCurrencySymbol()}${oldPrice} → ${getCurrencySymbol()}${newPrice}`);
+            
+            // Actualizar la sección de configuración si está visible
+            if (!document.getElementById('settings').classList.contains('hidden')) {
+                loadSettingsData();
+            }
+            
+            closeEditPriceModal();
+            
+            // Mostrar confirmación visual
+            alert(`Precio del Plan ${getPlanName(editingPricePlan)} actualizado correctamente a ${getCurrencySymbol()}${newPrice}`);
+        }
+
+        function updatePriceDisplay() {
+            const symbol = getCurrencySymbol();
+            document.getElementById('dailyPrice').textContent = `${symbol}${prices.daily}`;
+            document.getElementById('weeklyPrice').textContent = `${symbol}${prices.weekly}`;
+            document.getElementById('biweeklyPrice').textContent = `${symbol}${prices.biweekly}`;
+            document.getElementById('monthlyPrice').textContent = `${symbol}${prices.monthly}`;
+        }
+
+        function getPlanName(plan) {
+            const names = {
+                daily: 'Diario',
+                weekly: 'Semanal',
+                biweekly: 'Quincenal',
+                monthly: 'Mensual'
+            };
+            return names[plan] || plan;
+        }
+
+        // ============ RESTO DE FUNCIONES ============
 
         function showSection(sectionId) {
             document.querySelectorAll('.section').forEach(section => {
@@ -1318,6 +1646,9 @@
                 loadActivities();
             } else if (sectionId === 'pos') {
                 initializePOS();
+            } else if (sectionId === 'cortes') {
+                // Inicializar fechas del corte
+                actualizarRangoFechasCorte();
             } else if (sectionId === 'settings') {
                 loadSettingsData();
             }
@@ -1562,16 +1893,6 @@
             updateBulkDeleteButtonState();
         }
 
-        function getPlanName(plan) {
-            const names = {
-                daily: 'Diario',
-                weekly: 'Semanal',
-                biweekly: 'Quincenal',
-                monthly: 'Mensual'
-            };
-            return names[plan] || plan;
-        }
-
         function formatDate(dateString) {
             return new Date(dateString).toLocaleDateString('es-MX');
         }
@@ -1719,6 +2040,31 @@
             });
         }
 
+        // Nueva función para filtrar socios en el select del modal de pagos
+        function filterPaymentMembers() {
+            const searchTerm = document.getElementById('paymentMemberSearch').value.toLowerCase().trim();
+            const select = document.getElementById('paymentMember');
+            
+            // Guardar el valor actual seleccionado
+            const currentValue = select.value;
+            
+            // Filtrar miembros
+            const filteredMembers = members.filter(member => 
+                member.name.toLowerCase().includes(searchTerm)
+            );
+            
+            // Actualizar opciones del select
+            select.innerHTML = '<option value="">Seleccionar socio</option>';
+            filteredMembers.forEach(member => {
+                select.innerHTML += `<option value="${member.id}">${member.name}</option>`;
+            });
+            
+            // Restaurar el valor seleccionado si todavía está en la lista filtrada
+            if (currentValue && filteredMembers.some(m => m.id === currentValue)) {
+                select.value = currentValue;
+            }
+        }
+
         function loadPayments() {
             renderPaymentsTable(payments.slice(-10).reverse());
         }
@@ -1782,26 +2128,6 @@
                 'EUR': '€'
             };
             return symbols[currentCurrency] || '$';
-        }
-
-        function updatePriceDisplay() {
-            const symbol = getCurrencySymbol();
-            document.getElementById('dailyPrice').textContent = `${symbol}${prices.daily}`;
-            document.getElementById('weeklyPrice').textContent = `${symbol}${prices.weekly}`;
-            document.getElementById('biweeklyPrice').textContent = `${symbol}${prices.biweekly}`;
-            document.getElementById('monthlyPrice').textContent = `${symbol}${prices.monthly}`;
-        }
-
-        function editPrice(plan) {
-            const currentPrice = prices[plan];
-            const newPrice = prompt(`Ingrese el nuevo precio para el plan ${getPlanName(plan)}:`, currentPrice);
-            
-            if (newPrice !== null && !isNaN(newPrice) && newPrice > 0) {
-                prices[plan] = parseFloat(newPrice);
-                localStorage.setItem('gymPrices', JSON.stringify(prices));
-                updatePriceDisplay();
-                addActivity('price_updated', `Precio actualizado: Plan ${getPlanName(plan)} - ${getCurrencySymbol()}${newPrice}`);
-            }
         }
 
         function addActivity(type, description) {
@@ -2439,6 +2765,280 @@
                     </tr>
                 `;
             }).join('');
+        }
+
+        // ============ CORTES FUNCTIONS ============
+
+        function actualizarRangoFechasCorte() {
+            const tipo = document.getElementById('corteTipo').value;
+            const fechaReferencia = document.getElementById('corteFechaReferencia').value;
+
+            if (!fechaReferencia) return;
+
+            const ref = new Date(fechaReferencia + 'T12:00:00');
+            let desde, hasta;
+
+            switch (tipo) {
+                case 'diario':
+                    desde = new Date(ref);
+                    hasta = new Date(ref);
+                    break;
+                case 'semanal':
+                    // Lunes a domingo de la semana de referencia
+                    const diaSemana = ref.getDay() === 0 ? 6 : ref.getDay() - 1; // Lunes = 0
+                    desde = new Date(ref);
+                    desde.setDate(ref.getDate() - diaSemana);
+                    hasta = new Date(desde);
+                    hasta.setDate(desde.getDate() + 6);
+                    break;
+                case 'quincenal':
+                    // Día 1-15 o 16-fin de mes
+                    if (ref.getDate() <= 15) {
+                        desde = new Date(ref.getFullYear(), ref.getMonth(), 1);
+                        hasta = new Date(ref.getFullYear(), ref.getMonth(), 15);
+                    } else {
+                        desde = new Date(ref.getFullYear(), ref.getMonth(), 16);
+                        hasta = new Date(ref.getFullYear(), ref.getMonth() + 1, 0);
+                    }
+                    break;
+                case 'mensual':
+                    desde = new Date(ref.getFullYear(), ref.getMonth(), 1);
+                    hasta = new Date(ref.getFullYear(), ref.getMonth() + 1, 0);
+                    break;
+            }
+
+            document.getElementById('corteFechaDesde').value = desde.toISOString().split('T')[0];
+            document.getElementById('corteFechaHasta').value = hasta.toISOString().split('T')[0];
+        }
+
+        function generarCorte() {
+            const tipo = document.getElementById('corteTipo').value;
+            const fechaDesde = document.getElementById('corteFechaDesde').value;
+            const fechaHasta = document.getElementById('corteFechaHasta').value;
+            const cajaInicial = parseFloat(document.getElementById('cajaInicial').value) || 0;
+            const symbol = getCurrencySymbol();
+
+            if (!fechaDesde || !fechaHasta) {
+                alert('Por favor, seleccione una fecha de referencia válida.');
+                return;
+            }
+
+            // Filtrar ventas del POS en el rango
+            const ventasRango = sales.filter(sale => {
+                const fechaVenta = sale.date.split('T')[0];
+                return fechaVenta >= fechaDesde && fechaVenta <= fechaHasta;
+            });
+
+            // Filtrar pagos de membresías en el rango
+            const pagosRango = payments.filter(payment => {
+                return payment.date >= fechaDesde && payment.date <= fechaHasta;
+            });
+
+            // Calcular totales de ventas POS
+            const totalVentasPOS = ventasRango.reduce((sum, sale) => sum + sale.total, 0);
+            // Calcular total de pagos de membresías
+            const totalPagosMembresias = pagosRango.reduce((sum, payment) => sum + payment.amount, 0);
+
+            // Calcular ingresos por método de pago (solo POS por ahora, ya que membresías no registran método)
+            const ingresosEfectivo = ventasRango
+                .filter(s => s.paymentMethod === 'efectivo')
+                .reduce((sum, s) => sum + s.total, 0);
+            const ingresosTarjeta = ventasRango
+                .filter(s => s.paymentMethod === 'tarjeta')
+                .reduce((sum, s) => sum + s.total, 0);
+            const ingresosTransferencia = ventasRango
+                .filter(s => s.paymentMethod === 'transferencia')
+                .reduce((sum, s) => sum + s.total, 0);
+
+            // Egresos: cambios entregados en efectivo
+            const egresosCambios = ventasRango
+                .filter(s => s.paymentMethod === 'efectivo')
+                .reduce((sum, s) => sum + (s.change || 0), 0);
+
+            // Caja final = Caja inicial + Ventas POS efectivo + Pagos membresías (asumimos efectivo) + Ventas POS tarjeta/transferencia (informativas) - Cambios entregados
+            // Nota: Para un corte de caja real, solo el efectivo afecta la caja física. Sin embargo, mostraremos ambos.
+            const ingresosEfectivoTotal = ingresosEfectivo + totalPagosMembresias; // Asumimos que pagos membresías entran a caja en efectivo
+            const cajaFinal = cajaInicial + ingresosEfectivoTotal - egresosCambios;
+
+            // Ganancia del período (sin contar caja inicial)
+            const gananciaPeriodo = totalVentasPOS + totalPagosMembresias;
+
+            // Detalle de movimientos
+            const movimientos = [];
+
+            // Ventas POS
+            ventasRango.forEach(sale => {
+                movimientos.push({
+                    fecha: sale.date,
+                    concepto: `Venta POS - ${sale.items.map(i => `${i.name} (${i.quantity})`).join(', ')}`,
+                    metodo: sale.paymentMethod.charAt(0).toUpperCase() + sale.paymentMethod.slice(1),
+                    monto: sale.total,
+                    tipo: 'ingreso'
+                });
+                if (sale.change > 0) {
+                    movimientos.push({
+                        fecha: sale.date,
+                        concepto: `Cambio entregado - Venta #${sale.id.slice(-6)}`,
+                        metodo: 'Efectivo',
+                        monto: -sale.change,
+                        tipo: 'egreso'
+                    });
+                }
+            });
+
+            // Pagos membresías
+            pagosRango.forEach(payment => {
+                const member = members.find(m => m.id === payment.memberId);
+                movimientos.push({
+                    fecha: payment.date,
+                    concepto: `Pago membresía - ${member ? member.name : 'Socio eliminado'} (${getPlanName(payment.plan)})`,
+                    metodo: 'Efectivo', // Asumido
+                    monto: payment.amount,
+                    tipo: 'ingreso'
+                });
+            });
+
+            // Ordenar por fecha
+            movimientos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+            // Guardar datos del corte para exportación
+            lastCorteData = {
+                tipo: tipo,
+                fechaDesde,
+                fechaHasta,
+                cajaInicial,
+                totalVentasPOS,
+                totalPagosMembresias,
+                ingresosEfectivo,
+                ingresosTarjeta,
+                ingresosTransferencia,
+                egresosCambios,
+                cajaFinal,
+                gananciaPeriodo,
+                movimientos,
+                symbol
+            };
+
+            // Mostrar resultados
+            document.getElementById('corteCajaInicial').textContent = `${symbol}${cajaInicial.toFixed(2)}`;
+            document.getElementById('corteIngresosTotales').textContent = `${symbol}${(totalVentasPOS + totalPagosMembresias).toFixed(2)}`;
+            document.getElementById('corteEgresosTotales').textContent = `${symbol}${egresosCambios.toFixed(2)}`;
+            document.getElementById('corteCajaFinal').textContent = `${symbol}${cajaFinal.toFixed(2)}`;
+            document.getElementById('corteGanancia').textContent = `${symbol}${gananciaPeriodo.toFixed(2)}`;
+            document.getElementById('corteTotalVentasPOS').textContent = `${symbol}${totalVentasPOS.toFixed(2)}`;
+            document.getElementById('corteTotalPagosMembresias').textContent = `${symbol}${totalPagosMembresias.toFixed(2)}`;
+
+            // Llenar tabla de detalle
+            const tbody = document.getElementById('corteDetalleTable');
+            if (movimientos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-4 text-center text-gray-500">No hay movimientos en este período</td></tr>`;
+            } else {
+                tbody.innerHTML = movimientos.map(mov => `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-600">${formatDate(mov.fecha)}</td>
+                        <td class="px-4 py-2 text-sm text-gray-900">${mov.concepto}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-600">${mov.metodo}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-right ${mov.tipo === 'ingreso' ? 'text-green-600' : 'text-red-600'}">
+                            ${mov.tipo === 'ingreso' ? '+' : ''}${symbol}${Math.abs(mov.monto).toFixed(2)}
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            document.getElementById('corteResultados').classList.remove('hidden');
+            addActivity('corte_generado', `Corte ${tipo} generado del ${formatDate(fechaDesde)} al ${formatDate(fechaHasta)}`);
+        }
+
+        function exportCortePDF() {
+            if (!lastCorteData) {
+                alert('Primero genere un corte antes de exportar.');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const data = lastCorteData;
+
+            doc.setFontSize(18);
+            doc.setTextColor(31, 41, 55);
+            doc.text('Corte de Caja - Gimnasio', 14, 15);
+
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Generado: ${new Date().toLocaleString('es-MX')}`, 14, 22);
+
+            // Información del corte
+            doc.setFontSize(12);
+            doc.setTextColor(31, 41, 55);
+            doc.text(`Tipo de Corte: ${data.tipo.charAt(0).toUpperCase() + data.tipo.slice(1)}`, 14, 32);
+            doc.text(`Período: ${formatDate(data.fechaDesde)} - ${formatDate(data.fechaHasta)}`, 14, 39);
+
+            // Resumen
+            let yPos = 50;
+            doc.setFontSize(11);
+            doc.text('RESUMEN', 14, yPos);
+            yPos += 7;
+            doc.setFontSize(10);
+            doc.setTextColor(60, 60, 60);
+            doc.text(`Caja Inicial: ${data.symbol}${data.cajaInicial.toFixed(2)}`, 14, yPos);
+            yPos += 6;
+            doc.text(`Ingresos Totales: ${data.symbol}${(data.totalVentasPOS + data.totalPagosMembresias).toFixed(2)}`, 14, yPos);
+            yPos += 6;
+            doc.text(`Egresos (Cambios): ${data.symbol}${data.egresosCambios.toFixed(2)}`, 14, yPos);
+            yPos += 6;
+            doc.text(`Caja Final: ${data.symbol}${data.cajaFinal.toFixed(2)}`, 14, yPos);
+            yPos += 6;
+            doc.setTextColor(16, 185, 129);
+            doc.text(`Ganancia del Período: ${data.symbol}${data.gananciaPeriodo.toFixed(2)}`, 14, yPos);
+            yPos += 6;
+            doc.setTextColor(60, 60, 60);
+            doc.text(`Total Ventas POS: ${data.symbol}${data.totalVentasPOS.toFixed(2)}`, 14, yPos);
+            yPos += 6;
+            doc.text(`Total Pagos Membresías: ${data.symbol}${data.totalPagosMembresias.toFixed(2)}`, 14, yPos);
+            yPos += 10;
+
+            // Desglose por método
+            doc.setFontSize(11);
+            doc.setTextColor(31, 41, 55);
+            doc.text('DESGLOSE POR MÉTODO (POS)', 14, yPos);
+            yPos += 7;
+            doc.setFontSize(10);
+            doc.setTextColor(60, 60, 60);
+            doc.text(`Efectivo: ${data.symbol}${data.ingresosEfectivo.toFixed(2)}`, 14, yPos);
+            yPos += 6;
+            doc.text(`Tarjeta: ${data.symbol}${data.ingresosTarjeta.toFixed(2)}`, 14, yPos);
+            yPos += 6;
+            doc.text(`Transferencia: ${data.symbol}${data.ingresosTransferencia.toFixed(2)}`, 14, yPos);
+            yPos += 10;
+
+            // Tabla de movimientos
+            doc.setFontSize(11);
+            doc.setTextColor(31, 41, 55);
+            doc.text('DETALLE DE MOVIMIENTOS', 14, yPos);
+            yPos += 7;
+
+            const headers = [["Fecha", "Concepto", "Método", "Monto"]];
+            const body = data.movimientos.map(mov => [
+                formatDate(mov.fecha),
+                mov.concepto,
+                mov.metodo,
+                `${mov.tipo === 'ingreso' ? '+' : '-'}${data.symbol}${Math.abs(mov.monto).toFixed(2)}`
+            ]);
+
+            doc.autoTable({
+                head: headers,
+                body: body,
+                startY: yPos,
+                styles: { fontSize: 7, cellPadding: 1.5, overflow: 'linebreak' },
+                headStyles: { fillColor: [31, 41, 55], textColor: 255, fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [243, 244, 246] },
+                columnStyles: {
+                    3: { halign: 'right' }
+                }
+            });
+
+            doc.save(`corte_${data.tipo}_${data.fechaDesde}_${data.fechaHasta}.pdf`);
+            addActivity('corte_exportado', `Corte ${data.tipo} exportado a PDF`);
         }
 
         // ============ EXPORT FUNCTIONS ============
@@ -3193,6 +3793,7 @@
             localStorage.removeItem('gymPrices');
             
             cart = [];
+            lastCorteData = null;
             
             addActivity('system_reset', 'Sistema reiniciado - Todos los datos fueron eliminados');
             
@@ -3205,6 +3806,9 @@
             if (!document.getElementById('settings').classList.contains('hidden')) {
                 loadSettingsData();
             }
+            
+            // Limpiar sección de cortes
+            document.getElementById('corteResultados').classList.add('hidden');
             
             alert('El sistema ha sido reiniciado correctamente. Todos los datos han sido eliminados.');
         }
