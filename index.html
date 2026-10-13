@@ -115,7 +115,6 @@
             border-color: #ef4444;
         }
 
-        /* Animación para el modal de éxito */
         @keyframes bounce-in {
             0% { transform: scale(0.3); opacity: 0; }
             50% { transform: scale(1.05); }
@@ -126,7 +125,6 @@
             animation: bounce-in 0.5s ease-out;
         }
 
-        /* Estilos para el cambio */
         #changeAmount.positive {
             color: #10b981;
         }
@@ -137,7 +135,6 @@
             color: #9ca3af;
         }
 
-        /* Estilos para el buscador de socios */
         .member-search-wrapper {
             position: relative;
         }
@@ -168,7 +165,6 @@
             display: block;
         }
 
-        /* Estilos para el modal de edición de precios */
         #editPriceModal .modal-content {
             animation: slideDown 0.3s ease-out;
         }
@@ -178,6 +174,61 @@
         }
         .price-input:focus {
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+
+        .export-filtered-btn {
+            transition: all 0.2s ease;
+        }
+        .export-filtered-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15);
+        }
+        .export-filtered-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Estilos para credenciales */
+        .credential-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+            border: 2px solid #e5e7eb;
+        }
+
+        .credential-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.15);
+            border-color: #3b82f6;
+        }
+
+        .credential-photo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #3b82f6;
+        }
+
+        .credential-header {
+            background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+            color: white;
+            padding: 8px 12px;
+        }
+
+        .credential-body {
+            padding: 12px;
+            background: white;
+        }
+
+        .credential-download-btn {
+            transition: all 0.2s ease;
+        }
+
+        .credential-download-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
         }
     </style>
 </head>
@@ -207,26 +258,29 @@
     <!-- Navigation -->
     <nav class="bg-white shadow-md border-b">
         <div class="container mx-auto px-4">
-            <div class="flex space-x-8">
-                <button class="nav-btn active py-4 px-2 border-b-2 border-gym-secondary text-gym-secondary font-medium" data-section="dashboard">
+            <div class="flex space-x-8 overflow-x-auto">
+                <button class="nav-btn active py-4 px-2 border-b-2 border-gym-secondary text-gym-secondary font-medium whitespace-nowrap" data-section="dashboard">
                     Panel Principal
                 </button>
-                <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gym-secondary" data-section="members">
+                <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gym-secondary whitespace-nowrap" data-section="members">
                     Socios
                 </button>
-                <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gym-secondary" data-section="payments">
+                <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gym-secondary whitespace-nowrap" data-section="credenciales">
+                    Credenciales
+                </button>
+                <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gym-secondary whitespace-nowrap" data-section="payments">
                     Pagos
                 </button>
-                <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gym-secondary" data-section="history">
+                <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gym-secondary whitespace-nowrap" data-section="history">
                     Historial
                 </button>
-                <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gym-secondary" data-section="pos">
+                <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gym-secondary whitespace-nowrap" data-section="pos">
                     Punto de Venta
                 </button>
-                <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gym-secondary" data-section="cortes">
+                <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gym-secondary whitespace-nowrap" data-section="cortes">
                     Cortes
                 </button>
-                <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gym-secondary" data-section="settings">
+                <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gym-secondary whitespace-nowrap" data-section="settings">
                     Configuración
                 </button>
             </div>
@@ -239,7 +293,7 @@
         <section id="dashboard" class="section fade-in">
             <h2 class="text-3xl font-bold text-gym-primary mb-8">Panel Principal</h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-gym-accent">
                     <div class="flex items-center">
                         <div class="p-3 rounded-full bg-gym-accent bg-opacity-10">
@@ -260,6 +314,18 @@
                         <div class="ml-4">
                             <h3 class="text-sm font-medium text-gray-500">Socios Activos</h3>
                             <p class="text-2xl font-bold text-green-600" id="activeMembers">0</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-yellow-500">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-yellow-100">
+                            <span class="text-2xl">⚠️</span>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-sm font-medium text-gray-500">Vencidos - Falta Pago</h3>
+                            <p class="text-2xl font-bold text-yellow-600" id="overdueMembers">0</p>
                         </div>
                     </div>
                 </div>
@@ -289,7 +355,7 @@
         <section id="members" class="section hidden">
             <div class="flex justify-between items-center mb-8">
                 <h2 class="text-3xl font-bold text-gym-primary">Gestión de Socios</h2>
-                <div class="flex space-x-2">
+                <div class="flex space-x-2 flex-wrap gap-2">
                     <button id="exportExcelBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200">
                         Exportar Excel
                     </button>
@@ -321,6 +387,7 @@
                         <select id="statusFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
                             <option value="">Todos</option>
                             <option value="active">Activos</option>
+                            <option value="overdue">Vencidos - Falta por pago</option>
                             <option value="inactive">Inactivos</option>
                         </select>
                     </div>
@@ -335,6 +402,23 @@
                             Limpiar Filtros
                         </button>
                     </div>
+                </div>
+                
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <span class="text-sm font-medium text-gray-600">📥 Exportar lista filtrada:</span>
+                        <span id="filteredCountBadge" class="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">0 socios</span>
+                        <button id="exportFilteredExcelBtn" class="export-filtered-btn bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm">
+                            📊 Excel
+                        </button>
+                        <button id="exportFilteredPDFBtn" class="export-filtered-btn bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm">
+                            📄 PDF
+                        </button>
+                        <button id="exportFilteredCSVBtn" class="export-filtered-btn bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 text-sm">
+                            📋 CSV
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">💡 Aplica filtros (Estado, Ciudad, Búsqueda) y exporta solo esa lista específica.</p>
                 </div>
             </div>
 
@@ -355,6 +439,40 @@
                     <tbody id="membersTable" class="bg-white divide-y divide-gray-200">
                     </tbody>
                 </table>
+            </div>
+        </section>
+
+        <!-- Credentials Section -->
+        <section id="credenciales" class="section hidden">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-bold text-gym-primary">Credenciales de Socios</h2>
+                <div class="flex space-x-2">
+                    <button id="exportAllCredentialsBtn" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition duration-200">
+                        📥 Descargar Todas (PDF)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filtros -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Buscar Socio</label>
+                        <input type="text" id="credentialSearch" placeholder="Nombre, correo o teléfono" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                    </div>
+                    <div class="flex items-end">
+                        <button id="clearCredentialSearch" class="w-full bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition duration-200">
+                            Limpiar Búsqueda
+                        </button>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-3">💡 Haz clic en "Descargar Credencial" para generar el PDF individual del socio.</p>
+            </div>
+
+            <!-- Grid de Credenciales -->
+            <div id="credentialsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Las credenciales se cargarán aquí -->
             </div>
         </section>
 
@@ -462,6 +580,7 @@
                             <option value="member_added">Socio Agregado</option>
                             <option value="member_updated">Socio Actualizado</option>
                             <option value="member_deleted">Socio Eliminado</option>
+                            <option value="member_auto_inactive">Desactivación Automática</option>
                             <option value="payment_added">Pago Registrado</option>
                             <option value="price_updated">Precio Actualizado</option>
                         </select>
@@ -504,7 +623,6 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Panel de Productos -->
                 <div class="lg:col-span-2">
                     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -519,12 +637,10 @@
                         </div>
                         
                         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="productsGrid">
-                            <!-- Productos se cargarán aquí -->
                         </div>
                     </div>
                 </div>
 
-                <!-- Panel de Venta -->
                 <div>
                     <div class="bg-white rounded-lg shadow-md p-6 sticky top-4">
                         <h3 class="text-xl font-semibold text-gym-primary mb-4">Venta Actual</h3>
@@ -545,7 +661,6 @@
                             </div>
                         </div>
 
-                        <!-- Campo de efectivo recibido y cambio -->
                         <div class="border-t border-gray-200 pt-4 mb-4">
                             <div class="mb-3">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Efectivo Recibido:</label>
@@ -591,7 +706,6 @@
         <section id="cortes" class="section hidden">
             <h2 class="text-3xl font-bold text-gym-primary mb-8">Cortes de Caja</h2>
 
-            <!-- Configuración del Corte -->
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                 <h3 class="text-xl font-semibold text-gym-primary mb-4">Configurar Corte</h3>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
@@ -635,7 +749,6 @@
                 </div>
             </div>
 
-            <!-- Resultados del Corte -->
             <div id="corteResultados" class="hidden">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                     <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
@@ -672,7 +785,6 @@
                     </div>
                 </div>
 
-                <!-- Detalle de Movimientos -->
                 <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                     <h3 class="text-xl font-semibold text-gym-primary mb-4">Detalle de Movimientos</h3>
                     <div class="overflow-x-auto">
@@ -833,7 +945,7 @@
         </section>
     </main>
 
-    <!-- Modal de Edición de Precios (MODAL DEL SISTEMA) -->
+    <!-- Modal de Edición de Precios -->
     <div id="editPriceModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
         <div class="modal-content bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
             <div class="px-6 py-4 border-b border-gray-200">
@@ -960,7 +1072,6 @@
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Socio *</label>
-                        <!-- Buscador de socios con lupa -->
                         <div class="member-search-wrapper mb-2">
                             <span class="search-icon">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1324,13 +1435,10 @@
         let currentCurrency = localStorage.getItem('gymCurrency') || 'MXN';
         let editingMemberId = null;
 
-        // Variables para Cortes
         let lastCorteData = null;
-
-        // Variables para Edición de Precios
         let editingPricePlan = null;
+        let filteredMembers = [];
 
-        // Initialize app
         document.addEventListener('DOMContentLoaded', function() {
             initializeApp();
         });
@@ -1345,8 +1453,6 @@
             document.getElementById('currencySelect').value = currentCurrency;
             document.getElementById('membershipStart').value = new Date().toISOString().split('T')[0];
             document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
-
-            // Inicializar fecha de referencia para cortes
             document.getElementById('corteFechaReferencia').value = new Date().toISOString().split('T')[0];
         }
 
@@ -1355,12 +1461,10 @@
             document.getElementById('paymentDateToFilter').addEventListener('change', filterPayments);
             document.getElementById('clearPaymentFilters').addEventListener('click', clearPaymentFilters);
 
-            // Navigation
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => showSection(e.target.dataset.section));
             });
 
-            // Currency change
             document.getElementById('currencySelect').addEventListener('change', (e) => {
                 currentCurrency = e.target.value;
                 localStorage.setItem('gymCurrency', currentCurrency);
@@ -1370,7 +1474,6 @@
                 updateCart();
             });
               
-            // Configuración
             document.getElementById('exportAllDataPDFBtn').addEventListener('click', openExportAllDataModal);
             document.getElementById('resetSystemBtn').addEventListener('click', openResetSystemModal);
             document.getElementById('confirmExportAllBtn').addEventListener('click', exportAllDataPDF);
@@ -1388,7 +1491,6 @@
                 if (e.target === e.currentTarget) closeResetSystemModal();
             });
 
-            // Gestión de pagos
             document.getElementById('bulkDeletePaymentsBtn').addEventListener('click', openBulkDeletePaymentsModal);
             document.getElementById('selectAllPayments').addEventListener('change', toggleSelectAllPayments);
             document.getElementById('confirmBulkDeletePaymentsBtn').addEventListener('click', confirmBulkDeletePayments);
@@ -1397,21 +1499,18 @@
                 if (e.target === e.currentTarget) closeBulkDeletePaymentsModal();
             });
             
-            // Edición de pago
             document.getElementById('editPaymentForm').addEventListener('submit', updatePayment);
             document.getElementById('cancelEditPaymentBtn').addEventListener('click', closeEditPaymentModal);
             document.getElementById('editPaymentModal').addEventListener('click', (e) => {
                 if (e.target === e.currentTarget) closeEditPaymentModal();
             });
             
-            // Eliminación de pago
             document.getElementById('confirmDeletePaymentBtn').addEventListener('click', confirmDeletePayment);
             document.getElementById('cancelDeletePaymentBtn').addEventListener('click', closeDeletePaymentModal);
             document.getElementById('deletePaymentModal').addEventListener('click', (e) => {
                 if (e.target === e.currentTarget) closeDeletePaymentModal();
             });
 
-            // Member modal
             document.getElementById('addMemberBtn').addEventListener('click', () => {
                 editingMemberId = null;
                 document.getElementById('memberModalTitle').textContent = 'Nuevo Socio';
@@ -1425,12 +1524,10 @@
             document.getElementById('cancelMemberBtn').addEventListener('click', closeMemberModal);
             document.getElementById('memberForm').addEventListener('submit', saveMember);
 
-            // Payment modal
             document.getElementById('addPaymentBtn').addEventListener('click', () => {
                 loadMembersToPaymentSelect();
                 document.getElementById('paymentForm').reset();
                 document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
-                // Limpiar buscador al abrir el modal
                 document.getElementById('paymentMemberSearch').value = '';
                 document.getElementById('paymentModal').classList.remove('hidden');
                 document.getElementById('paymentModal').classList.add('flex');
@@ -1439,7 +1536,6 @@
             document.getElementById('cancelPaymentBtn').addEventListener('click', closePaymentModal);
             document.getElementById('paymentForm').addEventListener('submit', savePayment);
 
-            // Plan selection auto-fill price
             document.getElementById('paymentPlan').addEventListener('change', (e) => {
                 const plan = e.target.value;
                 if (plan && prices[plan]) {
@@ -1447,7 +1543,6 @@
                 }
             });
 
-            // Eliminación masiva de socios
             document.getElementById('bulkDeleteBtn').addEventListener('click', openBulkDeleteModal);
             document.getElementById('selectAllMembers').addEventListener('change', toggleSelectAllMembers);
             document.getElementById('confirmBulkDeleteBtn').addEventListener('click', confirmBulkDelete);
@@ -1456,18 +1551,27 @@
                 if (e.target === e.currentTarget) closeBulkDeleteModal();
             });
 
-            // Filters
             document.getElementById('searchMembers').addEventListener('input', filterMembers);
             document.getElementById('statusFilter').addEventListener('change', filterMembers);
             document.getElementById('cityFilter').addEventListener('change', filterMembers);
             document.getElementById('clearFilters').addEventListener('click', clearFilters);
 
-            // Activity filters
+            document.getElementById('exportFilteredExcelBtn').addEventListener('click', exportFilteredToExcel);
+            document.getElementById('exportFilteredPDFBtn').addEventListener('click', exportFilteredToPDF);
+            document.getElementById('exportFilteredCSVBtn').addEventListener('click', exportFilteredToCSV);
+
+            // Credenciales
+            document.getElementById('credentialSearch').addEventListener('input', loadCredentials);
+            document.getElementById('clearCredentialSearch').addEventListener('click', () => {
+                document.getElementById('credentialSearch').value = '';
+                loadCredentials();
+            });
+            document.getElementById('exportAllCredentialsBtn').addEventListener('click', exportAllCredentialsPDF);
+
             document.getElementById('activityTypeFilter').addEventListener('change', filterActivities);
             document.getElementById('dateFromFilter').addEventListener('change', filterActivities);
             document.getElementById('dateToFilter').addEventListener('change', filterActivities);
 
-            // Close modals on outside click
             document.getElementById('memberModal').addEventListener('click', (e) => {
                 if (e.target === e.currentTarget) closeMemberModal();
             });
@@ -1475,7 +1579,6 @@
                 if (e.target === e.currentTarget) closePaymentModal();
             });
 
-            // Photo upload
             document.getElementById('memberPhoto').addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -1488,7 +1591,6 @@
                 reader.readAsDataURL(file);
             });
 
-            // Export/Import
             document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
             document.getElementById('exportPDFBtn').addEventListener('click', exportToPDF);
             document.getElementById('importExcelBtn').addEventListener('click', () => {
@@ -1497,13 +1599,11 @@
             document.getElementById('excelImportInput').addEventListener('change', importFromExcel);
             document.getElementById('exportPaymentsPDFBtn').addEventListener('click', exportPaymentsToPDF);
 
-            // POS Success Modal
             document.getElementById('closeSuccessBtn').addEventListener('click', closeSuccessModal);
             document.getElementById('successModal').addEventListener('click', (e) => {
                 if (e.target === e.currentTarget) closeSuccessModal();
             });
 
-            // Buscador de socios en el modal de pagos
             const searchInput = document.getElementById('paymentMemberSearch');
             const clearSearchBtn = document.getElementById('clearPaymentMemberSearch');
             
@@ -1518,13 +1618,11 @@
                 });
             }
 
-            // Cortes event listeners
             document.getElementById('corteTipo').addEventListener('change', actualizarRangoFechasCorte);
             document.getElementById('corteFechaReferencia').addEventListener('change', actualizarRangoFechasCorte);
             document.getElementById('generarCorteBtn').addEventListener('click', generarCorte);
             document.getElementById('exportCortePDFBtn').addEventListener('click', exportCortePDF);
 
-            // Event listeners para el modal de edición de precios (MODAL DEL SISTEMA)
             document.getElementById('editPriceForm').addEventListener('submit', saveEditedPrice);
             document.getElementById('cancelEditPriceBtn').addEventListener('click', closeEditPriceModal);
             document.getElementById('editPriceModal').addEventListener('click', (e) => {
@@ -1532,7 +1630,272 @@
             });
         }
 
-        // ============ FUNCIONES PARA EDICIÓN DE PRECIOS (MODAL DEL SISTEMA) ============
+        // ============ FUNCIONES DE CREDENCIALES ============
+
+        function loadCredentials() {
+            const grid = document.getElementById('credentialsGrid');
+            if (!grid) return;
+
+            const searchTerm = (document.getElementById('credentialSearch')?.value || '').toLowerCase().trim();
+
+            let filtered = [...members];
+            if (searchTerm) {
+                filtered = filtered.filter(m =>
+                    m.name.toLowerCase().includes(searchTerm) ||
+                    m.email.toLowerCase().includes(searchTerm) ||
+                    m.phone.includes(searchTerm)
+                );
+            }
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-gray-500">
+                        <span class="text-5xl block mb-4">🪪</span>
+                        <p class="text-lg">No se encontraron socios</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(member => {
+                const status = getMemberStatus(member);
+                const statusColor = status === 'active' ? 'bg-green-100 text-green-800' :
+                                   status === 'overdue' ? 'bg-yellow-100 text-yellow-800' :
+                                   'bg-red-100 text-red-800';
+                const statusText = status === 'active' ? 'Activo' :
+                                  status === 'overdue' ? 'Vencido' : 'Inactivo';
+
+                return `
+                    <div class="credential-card rounded-lg overflow-hidden shadow-md">
+                        <div class="credential-header">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold tracking-wider">💪 BUENAVISTA GYM</span>
+                                <span class="text-xs opacity-75">CREDENCIAL</span>
+                            </div>
+                        </div>
+                        <div class="credential-body">
+                            <div class="flex items-center mb-3">
+                                <img src="${member.photo || 'https://via.placeholder.com/150'}" 
+                                     alt="${member.name}" 
+                                     class="credential-photo mr-3">
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="font-bold text-gray-900 text-sm truncate">${member.name}</h4>
+                                    <p class="text-xs text-gray-500">${member.age} años</p>
+                                    <span class="inline-block mt-1 px-2 py-0.5 text-xs rounded-full ${statusColor}">
+                                        ${statusText}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-600 space-y-1 mb-3">
+                                <div class="flex items-center">
+                                    <span class="mr-1">📞</span>
+                                    <span class="truncate">${member.phone}</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="mr-1">✉️</span>
+                                    <span class="truncate">${member.email}</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="mr-1">🎫</span>
+                                    <span>Plan ${getPlanName(member.membershipPlan)}</span>
+                                </div>
+                            </div>
+                            <button onclick="downloadCredentialPDF('${member.id}')" 
+                                    class="credential-download-btn w-full bg-gym-secondary text-white py-2 rounded-md hover:bg-blue-600 text-sm font-medium">
+                                📄 Descargar Credencial
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function drawCredentialOnDoc(doc, member) {
+            // Header oscuro
+            doc.setFillColor(31, 41, 55);
+            doc.rect(0, 0, 85.6, 14, 'F');
+
+            // Franja decorativa
+            doc.setFillColor(59, 130, 246);
+            doc.rect(0, 14, 85.6, 1.5, 'F');
+
+            // Título del gimnasio
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.text('BUENAVISTA GYM', 4, 7);
+
+            doc.setFontSize(5);
+            doc.setFont('helvetica', 'normal');
+            doc.text('CREDENCIAL DE SOCIO', 4, 11);
+
+            doc.setFontSize(5);
+            doc.text(`No. ${member.id.slice(-6)}`, 82, 11, { align: 'right' });
+
+            // Foto del socio
+            const photoX = 4;
+            const photoY = 18;
+            const photoSize = 22;
+
+            if (member.photo && member.photo.startsWith('data:image')) {
+                try {
+                    let format = 'JPEG';
+                    if (member.photo.includes('image/png')) format = 'PNG';
+                    else if (member.photo.includes('image/jpeg') || member.photo.includes('image/jpg')) format = 'JPEG';
+                    else if (member.photo.includes('image/webp')) format = 'WEBP';
+
+                    doc.addImage(member.photo, format, photoX, photoY, photoSize, photoSize);
+                } catch (e) {
+                    drawPhotoPlaceholder(doc, photoX, photoY, photoSize);
+                }
+            } else {
+                drawPhotoPlaceholder(doc, photoX, photoY, photoSize);
+            }
+
+            doc.setDrawColor(59, 130, 246);
+            doc.setLineWidth(0.5);
+            doc.rect(photoX, photoY, photoSize, photoSize);
+
+            // Datos del socio
+            const dataX = 30;
+            let dataY = 21;
+
+            doc.setTextColor(31, 41, 55);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'bold');
+            const nombreCorto = member.name.length > 22 ? member.name.substring(0, 22) + '...' : member.name;
+            doc.text(nombreCorto, dataX, dataY);
+            dataY += 5;
+
+            doc.setDrawColor(200, 200, 200);
+            doc.setLineWidth(0.2);
+            doc.line(dataX, dataY - 1.5, 82, dataY - 1.5);
+
+            doc.setFontSize(6);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(100, 100, 100);
+            doc.text('EDAD:', dataX, dataY);
+            doc.setTextColor(31, 41, 55);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`${member.age} años`, dataX + 10, dataY);
+            dataY += 4.5;
+
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(100, 100, 100);
+            doc.text('TEL:', dataX, dataY);
+            doc.setTextColor(31, 41, 55);
+            doc.setFont('helvetica', 'bold');
+            doc.text(member.phone, dataX + 10, dataY);
+            dataY += 4.5;
+
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(100, 100, 100);
+            doc.text('PLAN:', dataX, dataY);
+            doc.setTextColor(31, 41, 55);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`Plan ${getPlanName(member.membershipPlan)}`, dataX + 10, dataY);
+            dataY += 4.5;
+
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(100, 100, 100);
+            doc.text('VENCE:', dataX, dataY);
+            const status = getMemberStatus(member);
+            if (status === 'active') {
+                doc.setTextColor(16, 185, 129);
+            } else if (status === 'overdue') {
+                doc.setTextColor(234, 179, 8);
+            } else {
+                doc.setTextColor(239, 68, 68);
+            }
+            doc.setFont('helvetica', 'bold');
+            doc.text(formatDate(member.membershipEnd), dataX + 10, dataY);
+
+            // Pie de página
+            doc.setFillColor(243, 244, 246);
+            doc.rect(0, 48, 85.6, 6, 'F');
+
+            doc.setTextColor(100, 100, 100);
+            doc.setFontSize(4.5);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Válida para acceso al gimnasio', 4, 52);
+            doc.text(`Emitida: ${new Date().toLocaleDateString('es-MX')}`, 82, 52, { align: 'right' });
+        }
+
+        function downloadCredentialPDF(memberId) {
+            const member = members.find(m => m.id === memberId);
+            if (!member) {
+                alert('Socio no encontrado');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: [85.6, 54]
+            });
+
+            drawCredentialOnDoc(doc, member);
+
+            const fileName = `credencial_${member.name.replace(/[^a-zA-Z0-9]/g, '_')}_${member.id.slice(-6)}.pdf`;
+            doc.save(fileName);
+
+            addActivity('credential_downloaded', `Credencial descargada: ${member.name}`);
+        }
+
+        function drawPhotoPlaceholder(doc, x, y, size) {
+            doc.setFillColor(229, 231, 235);
+            doc.rect(x, y, size, size, 'F');
+            doc.setTextColor(156, 163, 175);
+            doc.setFontSize(5);
+            doc.setFont('helvetica', 'normal');
+            doc.text('SIN FOTO', x + size / 2, y + size / 2, { align: 'center' });
+        }
+
+        function exportAllCredentialsPDF() {
+            if (members.length === 0) {
+                alert('No hay socios registrados para generar credenciales');
+                return;
+            }
+
+            const searchTerm = (document.getElementById('credentialSearch')?.value || '').toLowerCase().trim();
+            let filtered = [...members];
+            if (searchTerm) {
+                filtered = filtered.filter(m =>
+                    m.name.toLowerCase().includes(searchTerm) ||
+                    m.email.toLowerCase().includes(searchTerm) ||
+                    m.phone.includes(searchTerm)
+                );
+            }
+
+            if (filtered.length === 0) {
+                alert('No hay socios que coincidan con la búsqueda');
+                return;
+            }
+
+            if (!confirm(`¿Deseas descargar ${filtered.length} credencial(es) en un solo PDF?`)) {
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: [85.6, 54]
+            });
+
+            filtered.forEach((member, index) => {
+                if (index > 0) {
+                    doc.addPage([85.6, 54], 'landscape');
+                }
+                drawCredentialOnDoc(doc, member);
+            });
+
+            doc.save(`credenciales_buenavista_gym_${new Date().toISOString().split('T')[0]}.pdf`);
+            addActivity('credentials_all_downloaded', `Descarga masiva de ${filtered.length} credenciales en PDF`);
+        }
+
+        // ============ RESTO DE FUNCIONES ============
 
         function openEditPriceModal(plan) {
             editingPricePlan = plan;
@@ -1550,7 +1913,6 @@
             document.getElementById('editPriceModal').classList.remove('hidden');
             document.getElementById('editPriceModal').classList.add('flex');
             
-            // Enfocar el input después de un pequeño delay
             setTimeout(() => {
                 const input = document.getElementById('editPriceNewValue');
                 input.focus();
@@ -1579,23 +1941,16 @@
             const oldPrice = prices[editingPricePlan];
             prices[editingPricePlan] = newPrice;
             
-            // Guardar en localStorage (persistencia)
             localStorage.setItem('gymPrices', JSON.stringify(prices));
-            
-            // Actualizar la visualización
             updatePriceDisplay();
             
-            // Registrar actividad
             addActivity('price_updated', `Precio actualizado: Plan ${getPlanName(editingPricePlan)} - ${getCurrencySymbol()}${oldPrice} → ${getCurrencySymbol()}${newPrice}`);
             
-            // Actualizar la sección de configuración si está visible
             if (!document.getElementById('settings').classList.contains('hidden')) {
                 loadSettingsData();
             }
             
             closeEditPriceModal();
-            
-            // Mostrar confirmación visual
             alert(`Precio del Plan ${getPlanName(editingPricePlan)} actualizado correctamente a ${getCurrencySymbol()}${newPrice}`);
         }
 
@@ -1617,7 +1972,71 @@
             return names[plan] || plan;
         }
 
-        // ============ RESTO DE FUNCIONES ============
+        function getMemberStatus(member) {
+            if (member.status === 'inactive') {
+                return 'inactive';
+            }
+            
+            const endDate = new Date(member.membershipEnd);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
+            
+            if (endDate >= today) {
+                return 'active';
+            }
+            
+            const diffTime = Math.abs(today - endDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays >= 60) {
+                return 'inactive';
+            }
+            
+            return 'overdue';
+        }
+
+        function isActiveMember(member) {
+            return getMemberStatus(member) === 'active';
+        }
+
+        function getStatusBadge(member) {
+            const status = getMemberStatus(member);
+            
+            const badges = {
+                active: '<span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full">Activo</span>',
+                inactive: '<span class="px-2 py-1 text-xs font-semibold text-red-800 bg-red-100 rounded-full">Inactivo</span>',
+                overdue: '<span class="px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded-full">Vencido - Falta por pago</span>'
+            };
+            
+            return badges[status] || badges.inactive;
+        }
+
+        function updateAllMemberStatuses() {
+            let changes = false;
+            
+            members.forEach(member => {
+                const endDate = new Date(member.membershipEnd);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                endDate.setHours(0, 0, 0, 0);
+                
+                const diffTime = Math.abs(today - endDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (endDate < today && diffDays >= 60 && member.status !== 'inactive') {
+                    member.status = 'inactive';
+                    changes = true;
+                    addActivity('member_auto_inactive', `Socio desactivado automáticamente por falta de pago (2 meses): ${member.name}`);
+                }
+            });
+            
+            if (changes) {
+                localStorage.setItem('gymMembers', JSON.stringify(members));
+            }
+            
+            return changes;
+        }
 
         function showSection(sectionId) {
             document.querySelectorAll('.section').forEach(section => {
@@ -1639,6 +2058,8 @@
             if (sectionId === 'members') {
                 loadMembers();
                 populateCityFilter();
+            } else if (sectionId === 'credenciales') {
+                loadCredentials();
             } else if (sectionId === 'payments') {
                 loadPayments();
                 loadMembersToPaymentSelect();
@@ -1647,7 +2068,6 @@
             } else if (sectionId === 'pos') {
                 initializePOS();
             } else if (sectionId === 'cortes') {
-                // Inicializar fechas del corte
                 actualizarRangoFechasCorte();
             } else if (sectionId === 'settings') {
                 loadSettingsData();
@@ -1655,15 +2075,16 @@
         }
 
         function updateDashboard() {
+            updateAllMemberStatuses();
+            
             const total = members.length;
-            const active = members.filter(m => {
-                const status = m.status || (isActiveMember(m) ? 'active' : 'inactive');
-                return status === 'active';
-            }).length;
-            const inactive = total - active;
+            const active = members.filter(m => getMemberStatus(m) === 'active').length;
+            const overdue = members.filter(m => getMemberStatus(m) === 'overdue').length;
+            const inactive = members.filter(m => getMemberStatus(m) === 'inactive').length;
 
             document.getElementById('totalMembers').textContent = total;
             document.getElementById('activeMembers').textContent = active;
+            document.getElementById('overdueMembers').textContent = overdue;
             document.getElementById('inactiveMembers').textContent = inactive;
 
             loadRecentActivities();
@@ -1696,23 +2117,17 @@
                 member_added: '👤',
                 member_updated: '✏️',
                 member_deleted: '🗑️',
+                member_auto_inactive: '⏰',
                 payment_added: '💰',
                 price_updated: '💲',
                 sale_completed: '🛒',
                 product_added: '📦',
                 product_updated: '📝',
-                product_deleted: '🗑️'
+                product_deleted: '🗑️',
+                credential_downloaded: '🪪',
+                credentials_all_downloaded: '📥'
             };
             return icons[type] || '📝';
-        }
-
-        function isActiveMember(member) {
-            if (member.status) {
-                return member.status === 'active';
-            }
-            const endDate = new Date(member.membershipEnd);
-            const today = new Date();
-            return endDate >= today;
         }
 
         function calculateMembershipEnd(startDate, plan) {
@@ -1828,6 +2243,11 @@
         }
 
         function loadMembers() {
+            updateAllMemberStatuses();
+            
+            filteredMembers = [...members];
+            updateFilteredCountBadge();
+            
             const tbody = document.getElementById('membersTable');
             
             if (members.length === 0) {
@@ -1842,10 +2262,9 @@
             }
 
             tbody.innerHTML = members.map(member => {
-                const isActive = isActiveMember(member);
-                const statusBadge = isActive 
-                    ? '<span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full">Activo</span>'
-                    : '<span class="px-2 py-1 text-xs font-semibold text-red-800 bg-red-100 rounded-full">Inactivo</span>';
+                const status = getMemberStatus(member);
+                const statusBadge = getStatusBadge(member);
+                const isActive = status === 'active';
 
                 return `
                     <tr class="hover:bg-gray-50">
@@ -1882,7 +2301,7 @@
                                 </div>
                                 <div class="flex space-x-1">
                                     <button onclick="toggleMemberStatus('${member.id}', 'active')" class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded ${isActive ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-200'}">Activar</button>
-                                    <button onclick="toggleMemberStatus('${member.id}', 'inactive')" class="text-xs px-2 py-1 bg-red-100 text-red-800 rounded ${!isActive ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-200'}">Desactivar</button>
+                                    <button onclick="toggleMemberStatus('${member.id}', 'inactive')" class="text-xs px-2 py-1 bg-red-100 text-red-800 rounded ${status === 'inactive' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-200'}">Desactivar</button>
                                 </div>
                             </div>
                         </td>
@@ -1894,6 +2313,7 @@
         }
 
         function formatDate(dateString) {
+            if (!dateString) return 'N/A';
             return new Date(dateString).toLocaleDateString('es-MX');
         }
 
@@ -1906,11 +2326,11 @@
         }
 
         function filterMembers() {
-            const search = document.getElementById('searchMembers').value.toLowerCase();
+            const search = document.getElementById('searchMembers').value.toLowerCase().trim();
             const status = document.getElementById('statusFilter').value;
             const city = document.getElementById('cityFilter').value;
 
-            let filtered = members;
+            let filtered = [...members];
 
             if (search) {
                 filtered = filtered.filter(member => 
@@ -1922,14 +2342,17 @@
 
             if (status) {
                 filtered = filtered.filter(member => {
-                    const memberStatus = member.status || (isActiveMember(member) ? 'active' : 'inactive');
-                    return status === 'active' ? memberStatus === 'active' : memberStatus === 'inactive';
+                    const memberStatus = getMemberStatus(member);
+                    return memberStatus === status;
                 });
             }
 
             if (city) {
                 filtered = filtered.filter(member => member.city === city);
             }
+
+            filteredMembers = filtered;
+            updateFilteredCountBadge();
 
             const tbody = document.getElementById('membersTable');
             
@@ -1945,10 +2368,9 @@
             }
 
             tbody.innerHTML = filtered.map(member => {
-                const isActive = isActiveMember(member);
-                const statusBadge = isActive 
-                    ? '<span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full">Activo</span>'
-                    : '<span class="px-2 py-1 text-xs font-semibold text-red-800 bg-red-100 rounded-full">Inactivo</span>';
+                const status = getMemberStatus(member);
+                const statusBadge = getStatusBadge(member);
+                const isActive = status === 'active';
 
                 return `
                     <tr class="hover:bg-gray-50">
@@ -1978,8 +2400,16 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button onclick="editMember('${member.id}')" class="text-gym-secondary hover:text-blue-600 mr-3">Editar</button>
-                            <button onclick="deleteMember('${member.id}')" class="text-red-600 hover:text-red-800">Eliminar</button>
+                            <div class="flex flex-col space-y-1">
+                                <div>
+                                    <button onclick="editMember('${member.id}')" class="text-gym-secondary hover:text-blue-600 mr-3">Editar</button>
+                                    <button onclick="deleteMember('${member.id}')" class="text-red-600 hover:text-red-800">Eliminar</button>
+                                </div>
+                                <div class="flex space-x-1">
+                                    <button onclick="toggleMemberStatus('${member.id}', 'active')" class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded ${isActive ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-200'}">Activar</button>
+                                    <button onclick="toggleMemberStatus('${member.id}', 'inactive')" class="text-xs px-2 py-1 bg-red-100 text-red-800 rounded ${status === 'inactive' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-200'}">Desactivar</button>
+                                </div>
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -1991,6 +2421,7 @@
             document.getElementById('statusFilter').value = '';
             document.getElementById('cityFilter').value = '';
             loadMembers();
+            updateFilteredCountBadge();
         }
 
         function populateCityFilter() {
@@ -2001,6 +2432,271 @@
             cities.forEach(city => {
                 select.innerHTML += `<option value="${city}">${city}</option>`;
             });
+        }
+
+        function updateFilteredCountBadge() {
+            const badge = document.getElementById('filteredCountBadge');
+            if (badge) {
+                const count = filteredMembers.length;
+                badge.textContent = `${count} socio${count !== 1 ? 's' : ''}`;
+                
+                const status = document.getElementById('statusFilter').value;
+                badge.className = 'text-xs px-3 py-1 rounded-full font-medium ';
+                
+                if (status === 'active') {
+                    badge.className += 'bg-green-100 text-green-800';
+                } else if (status === 'overdue') {
+                    badge.className += 'bg-yellow-100 text-yellow-800';
+                } else if (status === 'inactive') {
+                    badge.className += 'bg-red-100 text-red-800';
+                } else {
+                    badge.className += 'bg-blue-100 text-blue-800';
+                }
+            }
+        }
+
+        function getFilterDescription() {
+            const search = document.getElementById('searchMembers').value.trim();
+            const status = document.getElementById('statusFilter').value;
+            const city = document.getElementById('cityFilter').value;
+            
+            let description = [];
+            
+            if (status) {
+                const statusNames = {
+                    'active': 'Activos',
+                    'overdue': 'Vencidos',
+                    'inactive': 'Inactivos'
+                };
+                description.push(`Estado_${statusNames[status]}`);
+            }
+            
+            if (city) {
+                description.push(`Ciudad_${city}`);
+            }
+            
+            if (search) {
+                description.push(`Busqueda_${search}`);
+            }
+            
+            return description.length > 0 ? description.join('_') : 'Todos';
+        }
+
+        function getFilterDescriptionFull() {
+            const search = document.getElementById('searchMembers').value.trim();
+            const status = document.getElementById('statusFilter').value;
+            const city = document.getElementById('cityFilter').value;
+            
+            let description = [];
+            
+            if (status) {
+                const statusNames = {
+                    'active': 'Activos',
+                    'overdue': 'Vencidos - Falta por pago',
+                    'inactive': 'Inactivos'
+                };
+                description.push(`Estado: ${statusNames[status]}`);
+            }
+            
+            if (city) {
+                description.push(`Ciudad: ${city}`);
+            }
+            
+            if (search) {
+                description.push(`Búsqueda: "${search}"`);
+            }
+            
+            return description.length > 0 ? description.join(' | ') : 'Todos los socios';
+        }
+
+        function exportFilteredToExcel() {
+            if (filteredMembers.length === 0) {
+                alert('No hay socios para exportar con los filtros actuales');
+                return;
+            }
+            
+            const wb = XLSX.utils.book_new();
+            
+            const filterInfo = getFilterDescriptionFull();
+            const data = [
+                [`Lista de Socios - ${filterInfo}`],
+                [`Generado: ${new Date().toLocaleString('es-MX')} | Total: ${filteredMembers.length} socio(s)`],
+                [],
+                ["#", "Nombre", "Email", "Teléfono", "Edad", "Ciudad", "Dirección", "Plan", "Inicio Membresía", "Fin Membresía", "Estado"]
+            ];
+            
+            filteredMembers.forEach((member, index) => {
+                const status = getMemberStatus(member);
+                const statusText = status === 'active' ? 'Activo' : (status === 'overdue' ? 'Vencido - Falta pago' : 'Inactivo');
+                data.push([
+                    index + 1,
+                    member.name,
+                    member.email,
+                    member.phone,
+                    member.age,
+                    member.city,
+                    member.address,
+                    getPlanName(member.membershipPlan),
+                    formatDate(member.membershipStart),
+                    formatDate(member.membershipEnd),
+                    statusText
+                ]);
+            });
+            
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            
+            ws['!cols'] = [
+                { wch: 5 }, { wch: 25 }, { wch: 28 }, { wch: 15 }, { wch: 6 },
+                { wch: 15 }, { wch: 30 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 20 }
+            ];
+            
+            XLSX.utils.book_append_sheet(wb, ws, "Socios Filtrados");
+            
+            const filterDesc = getFilterDescription().replace(/[^a-zA-Z0-9]/g, '_');
+            XLSX.writeFile(wb, `socios_${filterDesc}_${new Date().toISOString().split('T')[0]}.xlsx`);
+            
+            addActivity('export_excel', `Exportación de lista filtrada a Excel (${filteredMembers.length} socios) - ${getFilterDescriptionFull()}`);
+        }
+
+        function exportFilteredToPDF() {
+            if (filteredMembers.length === 0) {
+                alert('No hay socios para exportar con los filtros actuales');
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(18);
+            doc.setTextColor(31, 41, 55);
+            doc.text('Lista de Socios - BuenavistaGYM', 14, 15);
+            
+            doc.setFontSize(11);
+            doc.setTextColor(59, 130, 246);
+            doc.text(`Filtro: ${getFilterDescriptionFull()}`, 14, 23);
+            
+            doc.setFontSize(9);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Generado: ${new Date().toLocaleString('es-MX')} | Total: ${filteredMembers.length} socio(s)`, 14, 30);
+            
+            const activeCount = filteredMembers.filter(m => getMemberStatus(m) === 'active').length;
+            const overdueCount = filteredMembers.filter(m => getMemberStatus(m) === 'overdue').length;
+            const inactiveCount = filteredMembers.filter(m => getMemberStatus(m) === 'inactive').length;
+            
+            doc.setFontSize(10);
+            doc.setTextColor(31, 41, 55);
+            doc.text(`Resumen: Activos: ${activeCount} | Vencidos: ${overdueCount} | Inactivos: ${inactiveCount}`, 14, 37);
+            
+            const headers = [["#", "Nombre", "Email", "Teléfono", "Edad", "Ciudad", "Plan", "Fin Membresía", "Estado"]];
+            
+            const data = filteredMembers.map((member, index) => {
+                const status = getMemberStatus(member);
+                const statusText = status === 'active' ? 'Activo' : (status === 'overdue' ? 'Vencido' : 'Inactivo');
+                return [
+                    (index + 1).toString(),
+                    member.name,
+                    member.email,
+                    member.phone,
+                    member.age.toString(),
+                    member.city,
+                    getPlanName(member.membershipPlan),
+                    formatDate(member.membershipEnd),
+                    statusText
+                ];
+            });
+            
+            doc.autoTable({
+                head: headers,
+                body: data,
+                startY: 43,
+                styles: { fontSize: 7, cellPadding: 1.5, overflow: 'linebreak' },
+                headStyles: { fillColor: [31, 41, 55], textColor: 255, fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [243, 244, 246] },
+                columnStyles: {
+                    0: { cellWidth: 8 },
+                    4: { cellWidth: 10 },
+                    8: { cellWidth: 20 }
+                },
+                didParseCell: function(data) {
+                    if (data.column.index === 8 && data.section === 'body') {
+                        const status = data.cell.raw;
+                        if (status === 'Activo') {
+                            data.cell.styles.textColor = [16, 185, 129];
+                            data.cell.styles.fontStyle = 'bold';
+                        } else if (status === 'Vencido') {
+                            data.cell.styles.textColor = [234, 179, 8];
+                            data.cell.styles.fontStyle = 'bold';
+                        } else if (status === 'Inactivo') {
+                            data.cell.styles.textColor = [239, 68, 68];
+                            data.cell.styles.fontStyle = 'bold';
+                        }
+                    }
+                }
+            });
+            
+            const filterDesc = getFilterDescription().replace(/[^a-zA-Z0-9]/g, '_');
+            doc.save(`socios_${filterDesc}_${new Date().toISOString().split('T')[0]}.pdf`);
+            
+            addActivity('export_pdf', `Exportación de lista filtrada a PDF (${filteredMembers.length} socios) - ${getFilterDescriptionFull()}`);
+        }
+
+        function exportFilteredToCSV() {
+            if (filteredMembers.length === 0) {
+                alert('No hay socios para exportar con los filtros actuales');
+                return;
+            }
+            
+            const headers = ["#", "Nombre", "Email", "Teléfono", "Edad", "Ciudad", "Dirección", "Plan", "Inicio Membresía", "Fin Membresía", "Estado"];
+            
+            const escapeCSV = (value) => {
+                if (value === null || value === undefined) return '';
+                const str = String(value);
+                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                    return '"' + str.replace(/"/g, '""') + '"';
+                }
+                return str;
+            };
+            
+            let csvContent = headers.join(',') + '\n';
+            
+            filteredMembers.forEach((member, index) => {
+                const status = getMemberStatus(member);
+                const statusText = status === 'active' ? 'Activo' : (status === 'overdue' ? 'Vencido - Falta pago' : 'Inactivo');
+                
+                const row = [
+                    index + 1,
+                    escapeCSV(member.name),
+                    escapeCSV(member.email),
+                    escapeCSV(member.phone),
+                    member.age,
+                    escapeCSV(member.city),
+                    escapeCSV(member.address),
+                    escapeCSV(getPlanName(member.membershipPlan)),
+                    formatDate(member.membershipStart),
+                    formatDate(member.membershipEnd),
+                    escapeCSV(statusText)
+                ];
+                
+                csvContent += row.join(',') + '\n';
+            });
+            
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+            
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            const filterDesc = getFilterDescription().replace(/[^a-zA-Z0-9]/g, '_');
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `socios_${filterDesc}_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            addActivity('export_csv', `Exportación de lista filtrada a CSV (${filteredMembers.length} socios) - ${getFilterDescriptionFull()}`);
         }
 
         function savePayment(e) {
@@ -2019,11 +2715,33 @@
             payments.push(paymentData);
             localStorage.setItem('gymPayments', JSON.stringify(payments));
 
+            const memberIndex = members.findIndex(m => m.id === paymentData.memberId);
+            if (memberIndex !== -1) {
+                const member = members[memberIndex];
+                const currentEnd = new Date(member.membershipEnd);
+                const paymentDate = new Date(paymentData.date);
+                
+                let startDate;
+                if (paymentDate > currentEnd) {
+                    startDate = paymentData.date;
+                } else {
+                    startDate = member.membershipEnd;
+                }
+                
+                member.membershipEnd = calculateMembershipEnd(startDate, paymentData.plan);
+                member.membershipPlan = paymentData.plan;
+                member.status = 'active';
+                
+                localStorage.setItem('gymMembers', JSON.stringify(members));
+            }
+
             const member = members.find(m => m.id === paymentData.memberId);
             addActivity('payment_added', `Pago registrado: ${getCurrencySymbol()}${paymentData.amount} - ${member.name}`);
 
             closePaymentModal();
             loadPayments();
+            loadMembers();
+            updateDashboard();
         }
 
         function closePaymentModal() {
@@ -2040,26 +2758,20 @@
             });
         }
 
-        // Nueva función para filtrar socios en el select del modal de pagos
         function filterPaymentMembers() {
             const searchTerm = document.getElementById('paymentMemberSearch').value.toLowerCase().trim();
             const select = document.getElementById('paymentMember');
-            
-            // Guardar el valor actual seleccionado
             const currentValue = select.value;
             
-            // Filtrar miembros
             const filteredMembers = members.filter(member => 
                 member.name.toLowerCase().includes(searchTerm)
             );
             
-            // Actualizar opciones del select
             select.innerHTML = '<option value="">Seleccionar socio</option>';
             filteredMembers.forEach(member => {
                 select.innerHTML += `<option value="${member.id}">${member.name}</option>`;
             });
             
-            // Restaurar el valor seleccionado si todavía está en la lista filtrada
             if (currentValue && filteredMembers.some(m => m.id === currentValue)) {
                 select.value = currentValue;
             }
@@ -2175,9 +2887,12 @@
                 member_added: 'Socio Agregado',
                 member_updated: 'Socio Actualizado',
                 member_deleted: 'Socio Eliminado',
+                member_auto_inactive: 'Desactivación Automática',
                 payment_added: 'Pago Registrado',
                 price_updated: 'Precio Actualizado',
-                sale_completed: 'Venta Completada'
+                sale_completed: 'Venta Completada',
+                credential_downloaded: 'Credencial Descargada',
+                credentials_all_downloaded: 'Credenciales Descargadas'
             };
             return names[type] || type;
         }
@@ -2244,7 +2959,6 @@
         }
 
         function setupPOSEventListeners() {
-            // Solo agregar listeners si no existen
             if (!document.getElementById('addProductBtn').hasAttribute('data-listener')) {
                 document.getElementById('addProductBtn').setAttribute('data-listener', 'true');
                 
@@ -2272,10 +2986,8 @@
                 document.getElementById('productCategoryFilter').addEventListener('change', filterProducts);
                 document.getElementById('salesDateFilter').addEventListener('change', filterSales);
                 
-                // Campo de efectivo recibido
                 document.getElementById('cashReceived').addEventListener('input', calculateChange);
                 
-                // Métodos de pago
                 document.querySelectorAll('.payment-method').forEach(btn => {
                     btn.addEventListener('click', function() {
                         currentPaymentMethod = this.dataset.method;
@@ -2284,7 +2996,6 @@
                         });
                         this.classList.add('ring-2', 'ring-gym-secondary');
                         
-                        // Si cambia a un método que no es efectivo, limpiar el campo de efectivo
                         if (currentPaymentMethod !== 'efectivo') {
                             document.getElementById('cashReceived').value = '';
                             document.getElementById('changeAmount').textContent = `${getCurrencySymbol()}0.00`;
@@ -2293,7 +3004,6 @@
                     });
                 });
                 
-                // Cerrar modales al hacer clic fuera
                 document.getElementById('productModal').addEventListener('click', (e) => {
                     if (e.target === e.currentTarget) closeProductModal();
                 });
@@ -2468,11 +3178,9 @@
             document.getElementById('cartSubtotal').textContent = `${getCurrencySymbol()}${subtotal.toFixed(2)}`;
             document.getElementById('cartTotal').textContent = `${getCurrencySymbol()}${subtotal.toFixed(2)}`;
             
-            // Calcular cambio si hay efectivo recibido
             calculateChange();
         }
 
-        // NUEVA FUNCIÓN: Calcular el cambio
         function calculateChange() {
             const totalText = document.getElementById('cartTotal').textContent;
             const total = parseFloat(totalText.replace(/[^0-9.-]/g, '')) || 0;
@@ -2518,14 +3226,12 @@
             }
         }
 
-        // MODIFICADA: Procesar pago con cálculo de cambio
         function checkout() {
             if (cart.length === 0) {
                 alert('No hay productos en el carrito');
                 return;
             }
             
-            // Verificar stock
             for (const item of cart) {
                 const product = products.find(p => p.id === item.product.id);
                 if (product.stock < item.quantity) {
@@ -2537,7 +3243,6 @@
             const subtotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
             const total = subtotal;
             
-            // Si el método de pago es efectivo, validar el monto recibido
             let cashReceived = 0;
             let change = 0;
             
@@ -2558,15 +3263,12 @@
                 
                 change = cashReceived - total;
             } else {
-                // Para otros métodos de pago, el monto recibido es igual al total
                 cashReceived = total;
                 change = 0;
             }
             
-            // Contar productos
             const productCount = cart.reduce((sum, item) => sum + item.quantity, 0);
             
-            // Registrar venta
             const sale = {
                 id: Date.now().toString(),
                 date: new Date().toISOString(),
@@ -2588,7 +3290,6 @@
             sales.push(sale);
             localStorage.setItem('gymSales', JSON.stringify(sales));
             
-            // Actualizar stock
             cart.forEach(item => {
                 const productIndex = products.findIndex(p => p.id === item.product.id);
                 if (productIndex !== -1) {
@@ -2597,25 +3298,20 @@
             });
             localStorage.setItem('gymProducts', JSON.stringify(products));
             
-            // Registrar actividad
             addActivity('sale_completed', `Venta realizada por ${getCurrencySymbol()}${subtotal.toFixed(2)} (${currentPaymentMethod})`);
             
-            // Mostrar modal de éxito
             showSuccessModal(total, cashReceived, change, currentPaymentMethod, productCount);
             
-            // Limpiar carrito y campos
             cart = [];
             updateCart();
             document.getElementById('cashReceived').value = '';
             document.getElementById('changeAmount').textContent = `${getCurrencySymbol()}0.00`;
             document.getElementById('changeAmount').className = 'text-lg font-bold text-gray-400';
             
-            // Recargar productos para mostrar stock actualizado
             loadProducts();
             loadCategories();
         }
 
-        // NUEVA FUNCIÓN: Mostrar modal de éxito
         function showSuccessModal(total, cashReceived, change, paymentMethod, productCount) {
             document.getElementById('successTotal').textContent = `${getCurrencySymbol()}${total.toFixed(2)}`;
             document.getElementById('successCashReceived').textContent = `${getCurrencySymbol()}${cashReceived.toFixed(2)}`;
@@ -2628,7 +3324,6 @@
             document.getElementById('successModal').classList.add('flex');
         }
 
-        // NUEVA FUNCIÓN: Cerrar modal de éxito
         function closeSuccessModal() {
             document.getElementById('successModal').classList.add('hidden');
             document.getElementById('successModal').classList.remove('flex');
@@ -2784,15 +3479,13 @@
                     hasta = new Date(ref);
                     break;
                 case 'semanal':
-                    // Lunes a domingo de la semana de referencia
-                    const diaSemana = ref.getDay() === 0 ? 6 : ref.getDay() - 1; // Lunes = 0
+                    const diaSemana = ref.getDay() === 0 ? 6 : ref.getDay() - 1;
                     desde = new Date(ref);
                     desde.setDate(ref.getDate() - diaSemana);
                     hasta = new Date(desde);
                     hasta.setDate(desde.getDate() + 6);
                     break;
                 case 'quincenal':
-                    // Día 1-15 o 16-fin de mes
                     if (ref.getDate() <= 15) {
                         desde = new Date(ref.getFullYear(), ref.getMonth(), 1);
                         hasta = new Date(ref.getFullYear(), ref.getMonth(), 15);
@@ -2823,23 +3516,18 @@
                 return;
             }
 
-            // Filtrar ventas del POS en el rango
             const ventasRango = sales.filter(sale => {
                 const fechaVenta = sale.date.split('T')[0];
                 return fechaVenta >= fechaDesde && fechaVenta <= fechaHasta;
             });
 
-            // Filtrar pagos de membresías en el rango
             const pagosRango = payments.filter(payment => {
                 return payment.date >= fechaDesde && payment.date <= fechaHasta;
             });
 
-            // Calcular totales de ventas POS
             const totalVentasPOS = ventasRango.reduce((sum, sale) => sum + sale.total, 0);
-            // Calcular total de pagos de membresías
             const totalPagosMembresias = pagosRango.reduce((sum, payment) => sum + payment.amount, 0);
 
-            // Calcular ingresos por método de pago (solo POS por ahora, ya que membresías no registran método)
             const ingresosEfectivo = ventasRango
                 .filter(s => s.paymentMethod === 'efectivo')
                 .reduce((sum, s) => sum + s.total, 0);
@@ -2850,23 +3538,16 @@
                 .filter(s => s.paymentMethod === 'transferencia')
                 .reduce((sum, s) => sum + s.total, 0);
 
-            // Egresos: cambios entregados en efectivo
             const egresosCambios = ventasRango
                 .filter(s => s.paymentMethod === 'efectivo')
                 .reduce((sum, s) => sum + (s.change || 0), 0);
 
-            // Caja final = Caja inicial + Ventas POS efectivo + Pagos membresías (asumimos efectivo) + Ventas POS tarjeta/transferencia (informativas) - Cambios entregados
-            // Nota: Para un corte de caja real, solo el efectivo afecta la caja física. Sin embargo, mostraremos ambos.
-            const ingresosEfectivoTotal = ingresosEfectivo + totalPagosMembresias; // Asumimos que pagos membresías entran a caja en efectivo
+            const ingresosEfectivoTotal = ingresosEfectivo + totalPagosMembresias;
             const cajaFinal = cajaInicial + ingresosEfectivoTotal - egresosCambios;
-
-            // Ganancia del período (sin contar caja inicial)
             const gananciaPeriodo = totalVentasPOS + totalPagosMembresias;
 
-            // Detalle de movimientos
             const movimientos = [];
 
-            // Ventas POS
             ventasRango.forEach(sale => {
                 movimientos.push({
                     fecha: sale.date,
@@ -2886,22 +3567,19 @@
                 }
             });
 
-            // Pagos membresías
             pagosRango.forEach(payment => {
                 const member = members.find(m => m.id === payment.memberId);
                 movimientos.push({
                     fecha: payment.date,
                     concepto: `Pago membresía - ${member ? member.name : 'Socio eliminado'} (${getPlanName(payment.plan)})`,
-                    metodo: 'Efectivo', // Asumido
+                    metodo: 'Efectivo',
                     monto: payment.amount,
                     tipo: 'ingreso'
                 });
             });
 
-            // Ordenar por fecha
             movimientos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
-            // Guardar datos del corte para exportación
             lastCorteData = {
                 tipo: tipo,
                 fechaDesde,
@@ -2919,7 +3597,6 @@
                 symbol
             };
 
-            // Mostrar resultados
             document.getElementById('corteCajaInicial').textContent = `${symbol}${cajaInicial.toFixed(2)}`;
             document.getElementById('corteIngresosTotales').textContent = `${symbol}${(totalVentasPOS + totalPagosMembresias).toFixed(2)}`;
             document.getElementById('corteEgresosTotales').textContent = `${symbol}${egresosCambios.toFixed(2)}`;
@@ -2928,7 +3605,6 @@
             document.getElementById('corteTotalVentasPOS').textContent = `${symbol}${totalVentasPOS.toFixed(2)}`;
             document.getElementById('corteTotalPagosMembresias').textContent = `${symbol}${totalPagosMembresias.toFixed(2)}`;
 
-            // Llenar tabla de detalle
             const tbody = document.getElementById('corteDetalleTable');
             if (movimientos.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-4 text-center text-gray-500">No hay movimientos en este período</td></tr>`;
@@ -2967,13 +3643,11 @@
             doc.setTextColor(100, 100, 100);
             doc.text(`Generado: ${new Date().toLocaleString('es-MX')}`, 14, 22);
 
-            // Información del corte
             doc.setFontSize(12);
             doc.setTextColor(31, 41, 55);
             doc.text(`Tipo de Corte: ${data.tipo.charAt(0).toUpperCase() + data.tipo.slice(1)}`, 14, 32);
             doc.text(`Período: ${formatDate(data.fechaDesde)} - ${formatDate(data.fechaHasta)}`, 14, 39);
 
-            // Resumen
             let yPos = 50;
             doc.setFontSize(11);
             doc.text('RESUMEN', 14, yPos);
@@ -2997,7 +3671,6 @@
             doc.text(`Total Pagos Membresías: ${data.symbol}${data.totalPagosMembresias.toFixed(2)}`, 14, yPos);
             yPos += 10;
 
-            // Desglose por método
             doc.setFontSize(11);
             doc.setTextColor(31, 41, 55);
             doc.text('DESGLOSE POR MÉTODO (POS)', 14, yPos);
@@ -3011,7 +3684,6 @@
             doc.text(`Transferencia: ${data.symbol}${data.ingresosTransferencia.toFixed(2)}`, 14, yPos);
             yPos += 10;
 
-            // Tabla de movimientos
             doc.setFontSize(11);
             doc.setTextColor(31, 41, 55);
             doc.text('DETALLE DE MOVIMIENTOS', 14, yPos);
@@ -3041,8 +3713,6 @@
             addActivity('corte_exportado', `Corte ${data.tipo} exportado a PDF`);
         }
 
-        // ============ EXPORT FUNCTIONS ============
-
         function exportToExcel() {
             const wb = XLSX.utils.book_new();
             
@@ -3051,7 +3721,8 @@
             ];
             
             members.forEach(member => {
-                const isActive = isActiveMember(member);
+                const status = getMemberStatus(member);
+                const statusText = status === 'active' ? 'Activo' : (status === 'overdue' ? 'Vencido - Falta pago' : 'Inactivo');
                 data.push([
                     member.name,
                     member.email,
@@ -3062,7 +3733,7 @@
                     getPlanName(member.membershipPlan),
                     formatDate(member.membershipStart),
                     formatDate(member.membershipEnd),
-                    isActive ? "Activo" : "Inactivo"
+                    statusText
                 ]);
             });
             
@@ -3086,14 +3757,15 @@
             const headers = [["Nombre", "Email", "Teléfono", "Edad", "Plan", "Estado"]];
             
             const data = members.map(member => {
-                const isActive = isActiveMember(member);
+                const status = getMemberStatus(member);
+                const statusText = status === 'active' ? 'Activo' : (status === 'overdue' ? 'Vencido' : 'Inactivo');
                 return [
                     member.name,
                     member.email,
                     member.phone,
                     member.age,
                     getPlanName(member.membershipPlan),
-                    isActive ? "Activo" : "Inactivo"
+                    statusText
                 ];
             });
             
@@ -3217,8 +3889,6 @@
             doc.save(`pagos_gimnasio_${new Date().toISOString().split('T')[0]}.pdf`);
             addActivity('export_pdf', 'Exportación de pagos a PDF realizada');
         }
-
-        // ============ SELECTION FUNCTIONS ============
 
         function toggleMemberSelection(memberId, checkbox) {
             if (checkbox.checked) {
@@ -3431,11 +4101,34 @@
                 payments[index] = paymentData;
                 localStorage.setItem('gymPayments', JSON.stringify(payments));
                 
+                const memberIndex = members.findIndex(m => m.id === paymentData.memberId);
+                if (memberIndex !== -1) {
+                    const member = members[memberIndex];
+                    
+                    const currentEnd = new Date(member.membershipEnd);
+                    const paymentDate = new Date(paymentData.date);
+                    
+                    let startDate;
+                    if (paymentDate > currentEnd) {
+                        startDate = paymentData.date;
+                    } else {
+                        startDate = member.membershipEnd;
+                    }
+                    
+                    member.membershipEnd = calculateMembershipEnd(startDate, paymentData.plan);
+                    member.membershipPlan = paymentData.plan;
+                    member.status = 'active';
+                    
+                    localStorage.setItem('gymMembers', JSON.stringify(members));
+                }
+                
                 const member = members.find(m => m.id === paymentData.memberId);
                 addActivity('payment_updated', `Pago actualizado: ${getCurrencySymbol()}${paymentData.amount} - ${member ? member.name : 'Socio desconocido'}`);
                 
                 closeEditPaymentModal();
                 loadPayments();
+                loadMembers();
+                updateDashboard();
             }
         }
 
@@ -3489,11 +4182,21 @@
             const memberIndex = members.findIndex(m => m.id === id);
             if (memberIndex === -1) return;
             
-            const currentStatus = members[memberIndex].status || (isActiveMember(members[memberIndex]) ? 'active' : 'inactive');
+            const currentStatus = getMemberStatus(members[memberIndex]);
             
             if (currentStatus === status) return;
             
-            members[memberIndex].status = status;
+            if (status === 'active') {
+                const plan = members[memberIndex].membershipPlan;
+                const today = new Date().toISOString().split('T')[0];
+                
+                members[memberIndex].membershipStart = today;
+                members[memberIndex].membershipEnd = calculateMembershipEnd(today, plan);
+                members[memberIndex].status = 'active';
+            } else {
+                members[memberIndex].status = status;
+            }
+            
             localStorage.setItem('gymMembers', JSON.stringify(members));
             
             const action = status === 'active' ? 'activado' : 'desactivado';
@@ -3502,8 +4205,6 @@
             loadMembers();
             updateDashboard();
         }
-
-        // ============ SALES EXPORT FUNCTIONS ============
 
         function exportVisibleSalesPDF() {
             if (filteredSales.length === 0) {
@@ -3586,18 +4287,16 @@
             addActivity('export_sales_pdf', `Exportación de reporte de ventas: ${filename}`);
         }
 
-        // ============ SETTINGS FUNCTIONS ============
-
         function loadSettingsData() {
+            updateAllMemberStatuses();
+            
             document.getElementById('settingsTotalMembers').textContent = members.length;
             
-            const activeMembers = members.filter(m => {
-                const status = m.status || (isActiveMember(m) ? 'active' : 'inactive');
-                return status === 'active';
-            }).length;
+            const activeMembers = members.filter(m => getMemberStatus(m) === 'active').length;
+            const inactiveMembers = members.filter(m => getMemberStatus(m) === 'inactive').length;
             
             document.getElementById('settingsActiveMembers').textContent = activeMembers;
-            document.getElementById('settingsInactiveMembers').textContent = members.length - activeMembers;
+            document.getElementById('settingsInactiveMembers').textContent = inactiveMembers;
             document.getElementById('settingsTotalPayments').textContent = payments.length;
             
             const symbol = getCurrencySymbol();
@@ -3719,17 +4418,17 @@
             doc.setTextColor(31, 41, 55);
             doc.text('RESUMEN ESTADÍSTICO', 14, 40);
             
-            const activeMembers = members.filter(m => {
-                const status = m.status || (isActiveMember(m) ? 'active' : 'inactive');
-                return status === 'active';
-            }).length;
+            const activeMembers = members.filter(m => getMemberStatus(m) === 'active').length;
+            const overdueMembers = members.filter(m => getMemberStatus(m) === 'overdue').length;
+            const inactiveMembers = members.filter(m => getMemberStatus(m) === 'inactive').length;
             
             const salesRevenue = sales.reduce((total, sale) => total + sale.total, 0);
             
             const stats = [
                 [`Total Socios:`, members.length],
                 [`Socios Activos:`, activeMembers],
-                [`Socios Inactivos:`, members.length - activeMembers],
+                [`Socios Vencidos:`, overdueMembers],
+                [`Socios Inactivos:`, inactiveMembers],
                 [`Total Pagos:`, payments.length],
                 [`Total Productos:`, products.length],
                 [`Total Ventas:`, sales.length],
@@ -3807,7 +4506,6 @@
                 loadSettingsData();
             }
             
-            // Limpiar sección de cortes
             document.getElementById('corteResultados').classList.add('hidden');
             
             alert('El sistema ha sido reiniciado correctamente. Todos los datos han sido eliminados.');
