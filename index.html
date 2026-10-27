@@ -230,6 +230,24 @@
             transform: scale(1.02);
             box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
         }
+
+        /* Estilos para ganancia */
+        .profit-positive {
+            color: #10b981;
+            font-weight: 600;
+        }
+        .profit-negative {
+            color: #ef4444;
+            font-weight: 600;
+        }
+        .profit-zero {
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        #profitPreview {
+            transition: all 0.2s ease;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -654,8 +672,16 @@
                                 <span class="font-medium">Subtotal:</span>
                                 <span id="cartSubtotal">$0.00</span>
                             </div>
+                            <div class="flex justify-between mb-2 text-sm text-gray-600">
+                                <span>Costo total:</span>
+                                <span id="cartCost">$0.00</span>
+                            </div>
+                            <div class="flex justify-between mb-2 text-sm font-semibold text-green-600">
+                                <span>Ganancia estimada:</span>
+                                <span id="cartProfit">$0.00</span>
+                            </div>
                            
-                            <div class="flex justify-between text-lg font-bold">
+                            <div class="flex justify-between text-lg font-bold border-t pt-2 mt-2">
                                 <span>Total:</span>
                                 <span id="cartTotal">$0.00</span>
                             </div>
@@ -785,6 +811,26 @@
                     </div>
                 </div>
 
+                <!-- Ganancia real POS -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6 border-l-4 border-emerald-500">
+                    <h3 class="text-xl font-semibold text-gym-primary mb-2">📊 Ganancia Real en Ventas POS</h3>
+                    <p class="text-sm text-gray-600 mb-3">Esta ganancia se calcula como la diferencia entre el precio de venta y el costo de cada producto vendido en el período.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <span class="text-sm text-gray-500">Ventas POS (ingresos):</span>
+                            <p class="text-xl font-bold text-gray-900" id="corteVentasPOSIngreso">$0.00</p>
+                        </div>
+                        <div>
+                            <span class="text-sm text-gray-500">Costo de productos vendidos:</span>
+                            <p class="text-xl font-bold text-orange-600" id="corteCostoPOS">$0.00</p>
+                        </div>
+                        <div>
+                            <span class="text-sm text-gray-500">Ganancia bruta POS:</span>
+                            <p class="text-xl font-bold text-emerald-600" id="corteGananciaPOS">$0.00</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                     <h3 class="text-xl font-semibold text-gym-primary mb-4">Detalle de Movimientos</h3>
                     <div class="overflow-x-auto">
@@ -824,7 +870,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <span class="font-medium">Versión del Sistema:</span>
-                        <span class="ml-2" id="systemVersion">N.O.V.A v2.0.1</span>
+                        <span class="ml-2" id="systemVersion">N.O.V.A v2.1</span>
                     </div>
                     <div>
                         <span class="font-medium">Última Actualización:</span>
@@ -928,6 +974,14 @@
                         <div class="flex justify-between">
                             <span class="text-gray-600">Ingresos por Ventas:</span>
                             <span class="font-medium" id="settingsSalesRevenue">$0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Costo Total de Productos Vendidos:</span>
+                            <span class="font-medium text-orange-600" id="settingsCostRevenue">$0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Ganancia Total Bruta:</span>
+                            <span class="font-medium text-emerald-600" id="settingsProfitRevenue">$0.00</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Producto Más Vendido:</span>
@@ -1135,13 +1189,37 @@
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Precio *</label>
-                            <input type="number" id="productPrice" required min="0" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Precio de Compra (Costo) *</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" id="productCostSymbol">$</span>
+                                <input type="number" id="productCost" required min="0" step="0.01" 
+                                       class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary"
+                                       oninput="updateProductProfitPreview()">
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Stock *</label>
-                            <input type="number" id="productStock" required min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Precio de Venta *</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" id="productPriceSymbol">$</span>
+                                <input type="number" id="productPrice" required min="0" step="0.01" 
+                                       class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary"
+                                       oninput="updateProductProfitPreview()">
+                            </div>
                         </div>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-600">💰 Ganancia por unidad:</span>
+                            <span id="profitPreview" class="text-lg font-bold profit-zero">$0.00</span>
+                        </div>
+                        <div class="flex items-center justify-between mt-1">
+                            <span class="text-xs text-gray-500">Margen de ganancia:</span>
+                            <span id="marginPreview" class="text-sm font-medium text-gray-700">0.00%</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Stock *</label>
+                        <input type="number" id="productStock" required min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gym-secondary">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
@@ -1180,7 +1258,7 @@
             </div>
             <div class="p-6">
                 <div id="salesSummary" class="bg-gray-50 p-4 rounded-lg mb-4 hidden">
-                    <div class="grid grid-cols-3 gap-4 text-sm">
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                         <div>
                             <span class="font-medium">Total Ventas:</span>
                             <span id="summaryTotalSales" class="ml-2">0</span>
@@ -1188,6 +1266,14 @@
                         <div>
                             <span class="font-medium">Monto Total:</span>
                             <span id="summaryTotalAmount" class="ml-2">$0.00</span>
+                        </div>
+                        <div>
+                            <span class="font-medium">Costo Total:</span>
+                            <span id="summaryTotalCost" class="ml-2">$0.00</span>
+                        </div>
+                        <div>
+                            <span class="font-medium">Ganancia Total:</span>
+                            <span id="summaryTotalProfit" class="ml-2 text-green-600 font-bold">$0.00</span>
                         </div>
                         <div>
                             <span class="font-medium">Productos Vendidos:</span>
@@ -1203,6 +1289,7 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Productos</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ganancia</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Método</th>
                         </tr>
                     </thead>
@@ -1239,6 +1326,10 @@
                         <span id="successChange">$0.00</span>
                     </div>
                     <div class="flex justify-between mt-3 text-sm text-gray-500">
+                        <span>Ganancia de esta venta:</span>
+                        <span id="successProfit" class="font-semibold text-green-600">$0.00</span>
+                    </div>
+                    <div class="flex justify-between mt-1 text-sm text-gray-500">
                         <span>Método de pago:</span>
                         <span id="successPaymentMethod" class="font-medium">Efectivo</span>
                     </div>
@@ -1454,6 +1545,7 @@
             document.getElementById('membershipStart').value = new Date().toISOString().split('T')[0];
             document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('corteFechaReferencia').value = new Date().toISOString().split('T')[0];
+            updateProductProfitPreview();
         }
 
         function setupEventListeners() {
@@ -1628,6 +1720,37 @@
             document.getElementById('editPriceModal').addEventListener('click', (e) => {
                 if (e.target === e.currentTarget) closeEditPriceModal();
             });
+
+            // Eventos para el cálculo de ganancia en el modal de producto
+            document.getElementById('productCost').addEventListener('input', updateProductProfitPreview);
+            document.getElementById('productPrice').addEventListener('input', updateProductProfitPreview);
+        }
+
+        // ============ FUNCIONES DE GANANCIA ============
+
+        function updateProductProfitPreview() {
+            const cost = parseFloat(document.getElementById('productCost').value) || 0;
+            const price = parseFloat(document.getElementById('productPrice').value) || 0;
+            const profit = price - cost;
+            const margin = price > 0 ? (profit / price) * 100 : 0;
+            const symbol = getCurrencySymbol();
+
+            const profitPreview = document.getElementById('profitPreview');
+            const marginPreview = document.getElementById('marginPreview');
+
+            profitPreview.textContent = `${symbol}${profit.toFixed(2)}`;
+            profitPreview.className = 'text-lg font-bold ' + 
+                (profit > 0 ? 'profit-positive' : profit < 0 ? 'profit-negative' : 'profit-zero');
+
+            marginPreview.textContent = `${margin.toFixed(2)}%`;
+            marginPreview.className = 'text-sm font-medium ' + 
+                (margin > 0 ? 'text-green-600' : margin < 0 ? 'text-red-600' : 'text-gray-700');
+        }
+
+        function updateProductSymbols() {
+            const symbol = getCurrencySymbol();
+            document.getElementById('productCostSymbol').textContent = symbol;
+            document.getElementById('productPriceSymbol').textContent = symbol;
         }
 
         // ============ FUNCIONES DE CREDENCIALES ============
@@ -1711,15 +1834,12 @@
         }
 
         function drawCredentialOnDoc(doc, member) {
-            // Header oscuro
             doc.setFillColor(31, 41, 55);
             doc.rect(0, 0, 85.6, 14, 'F');
 
-            // Franja decorativa
             doc.setFillColor(59, 130, 246);
             doc.rect(0, 14, 85.6, 1.5, 'F');
 
-            // Título del gimnasio
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(9);
             doc.setFont('helvetica', 'bold');
@@ -1732,7 +1852,6 @@
             doc.setFontSize(5);
             doc.text(`No. ${member.id.slice(-6)}`, 82, 11, { align: 'right' });
 
-            // Foto del socio
             const photoX = 4;
             const photoY = 18;
             const photoSize = 22;
@@ -1756,7 +1875,6 @@
             doc.setLineWidth(0.5);
             doc.rect(photoX, photoY, photoSize, photoSize);
 
-            // Datos del socio
             const dataX = 30;
             let dataY = 21;
 
@@ -1810,7 +1928,6 @@
             doc.setFont('helvetica', 'bold');
             doc.text(formatDate(member.membershipEnd), dataX + 10, dataY);
 
-            // Pie de página
             doc.setFillColor(243, 244, 246);
             doc.rect(0, 48, 85.6, 6, 'F');
 
@@ -2966,6 +3083,8 @@
                     editingProductId = null;
                     document.getElementById('productModalTitle').textContent = 'Nuevo Producto';
                     document.getElementById('productForm').reset();
+                    updateProductSymbols();
+                    updateProductProfitPreview();
                     document.getElementById('productModal').classList.remove('hidden');
                     document.getElementById('productModal').classList.add('flex');
                 });
@@ -3011,6 +3130,7 @@
                     if (e.target === e.currentTarget) closeSalesModal();
                 });
             }
+            updateProductSymbols();
         }
 
         function loadProducts() {
@@ -3023,6 +3143,7 @@
             }
             
             products.forEach(product => {
+                const profit = (product.price || 0) - (product.cost || 0);
                 const productCard = document.createElement('div');
                 productCard.className = 'bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition cursor-pointer';
                 productCard.innerHTML = `
@@ -3032,18 +3153,26 @@
                             <p class="text-sm text-gray-600 mb-2">${product.category}</p>
                             <p class="text-xs text-gray-500">${product.description || 'Sin descripción'}</p>
                         </div>
-                        <div class="mt-4 flex justify-between items-end">
-                            <div>
-                                <span class="text-lg font-bold">${getCurrencySymbol()}${product.price.toFixed(2)}</span>
-                                <span class="text-xs text-gray-500 block">Stock: ${product.stock}</span>
+                        <div class="mt-4">
+                            <div class="flex justify-between items-end">
+                                <div>
+                                    <span class="text-lg font-bold">${getCurrencySymbol()}${product.price.toFixed(2)}</span>
+                                    <span class="text-xs text-gray-500 block">Costo: ${getCurrencySymbol()}${(product.cost || 0).toFixed(2)}</span>
+                                </div>
+                                <span class="text-xs font-semibold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}">
+                                    Ganancia: ${getCurrencySymbol()}${profit.toFixed(2)}
+                                </span>
                             </div>
-                            <div class="flex space-x-1">
-                                <button onclick="event.stopPropagation(); editProduct('${product.id}')" class="text-gym-secondary hover:text-blue-600 p-1">
-                                    ✏️
-                                </button>
-                                <button onclick="event.stopPropagation(); deleteProduct('${product.id}')" class="text-red-600 hover:text-red-800 p-1">
-                                    🗑️
-                                </button>
+                            <div class="flex justify-between items-center mt-1">
+                                <span class="text-xs text-gray-500">Stock: ${product.stock}</span>
+                                <div class="flex space-x-1">
+                                    <button onclick="event.stopPropagation(); editProduct('${product.id}')" class="text-gym-secondary hover:text-blue-600 p-1">
+                                        ✏️
+                                    </button>
+                                    <button onclick="event.stopPropagation(); deleteProduct('${product.id}')" class="text-red-600 hover:text-red-800 p-1">
+                                        🗑️
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -3090,6 +3219,7 @@
             }
             
             filtered.forEach(product => {
+                const profit = (product.price || 0) - (product.cost || 0);
                 const productCard = document.createElement('div');
                 productCard.className = 'bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition cursor-pointer';
                 productCard.innerHTML = `
@@ -3099,10 +3229,18 @@
                             <p class="text-sm text-gray-600 mb-2">${product.category}</p>
                             <p class="text-xs text-gray-500">${product.description || 'Sin descripción'}</p>
                         </div>
-                        <div class="mt-4 flex justify-between items-end">
-                            <div>
-                                <span class="text-lg font-bold">${getCurrencySymbol()}${product.price.toFixed(2)}</span>
-                                <span class="text-xs text-gray-500 block">Stock: ${product.stock}</span>
+                        <div class="mt-4">
+                            <div class="flex justify-between items-end">
+                                <div>
+                                    <span class="text-lg font-bold">${getCurrencySymbol()}${product.price.toFixed(2)}</span>
+                                    <span class="text-xs text-gray-500 block">Costo: ${getCurrencySymbol()}${(product.cost || 0).toFixed(2)}</span>
+                                </div>
+                                <span class="text-xs font-semibold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}">
+                                    Ganancia: ${getCurrencySymbol()}${profit.toFixed(2)}
+                                </span>
+                            </div>
+                            <div class="flex justify-between items-center mt-1">
+                                <span class="text-xs text-gray-500">Stock: ${product.stock}</span>
                             </div>
                         </div>
                     </div>
@@ -3144,6 +3282,8 @@
             if (cart.length === 0) {
                 cartItems.innerHTML = '<p class="text-gray-500 text-center py-4">No hay productos agregados</p>';
                 document.getElementById('cartSubtotal').textContent = `${getCurrencySymbol()}0.00`;
+                document.getElementById('cartCost').textContent = `${getCurrencySymbol()}0.00`;
+                document.getElementById('cartProfit').textContent = `${getCurrencySymbol()}0.00`;
                 document.getElementById('cartTotal').textContent = `${getCurrencySymbol()}0.00`;
                 document.getElementById('changeAmount').textContent = `${getCurrencySymbol()}0.00`;
                 document.getElementById('changeAmount').className = 'text-lg font-bold text-gray-400';
@@ -3153,10 +3293,13 @@
             cartItems.innerHTML = '';
             
             let subtotal = 0;
+            let totalCost = 0;
             
             cart.forEach(item => {
                 const itemTotal = item.product.price * item.quantity;
+                const itemCost = (item.product.cost || 0) * item.quantity;
                 subtotal += itemTotal;
+                totalCost += itemCost;
                 
                 const cartItem = document.createElement('div');
                 cartItem.className = 'flex justify-between items-center p-2 bg-gray-50 rounded';
@@ -3175,7 +3318,12 @@
                 cartItems.appendChild(cartItem);
             });
             
+            const totalProfit = subtotal - totalCost;
+            
             document.getElementById('cartSubtotal').textContent = `${getCurrencySymbol()}${subtotal.toFixed(2)}`;
+            document.getElementById('cartCost').textContent = `${getCurrencySymbol()}${totalCost.toFixed(2)}`;
+            document.getElementById('cartProfit').textContent = `${getCurrencySymbol()}${totalProfit.toFixed(2)}`;
+            document.getElementById('cartProfit').className = totalProfit >= 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold';
             document.getElementById('cartTotal').textContent = `${getCurrencySymbol()}${subtotal.toFixed(2)}`;
             
             calculateChange();
@@ -3242,6 +3390,8 @@
             
             const subtotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
             const total = subtotal;
+            const totalCost = cart.reduce((sum, item) => sum + ((item.product.cost || 0) * item.quantity), 0);
+            const totalProfit = subtotal - totalCost;
             
             let cashReceived = 0;
             let change = 0;
@@ -3276,9 +3426,12 @@
                     productId: item.product.id,
                     name: item.product.name,
                     price: item.product.price,
+                    cost: item.product.cost || 0,
                     quantity: item.quantity
                 })),
                 subtotal: subtotal,
+                totalCost: totalCost,
+                totalProfit: totalProfit,
                 tax: 0,
                 total: subtotal,
                 paymentMethod: currentPaymentMethod,
@@ -3298,9 +3451,9 @@
             });
             localStorage.setItem('gymProducts', JSON.stringify(products));
             
-            addActivity('sale_completed', `Venta realizada por ${getCurrencySymbol()}${subtotal.toFixed(2)} (${currentPaymentMethod})`);
+            addActivity('sale_completed', `Venta realizada por ${getCurrencySymbol()}${subtotal.toFixed(2)} (Ganancia: ${getCurrencySymbol()}${totalProfit.toFixed(2)}) (${currentPaymentMethod})`);
             
-            showSuccessModal(total, cashReceived, change, currentPaymentMethod, productCount);
+            showSuccessModal(total, cashReceived, change, currentPaymentMethod, productCount, totalProfit);
             
             cart = [];
             updateCart();
@@ -3312,10 +3465,11 @@
             loadCategories();
         }
 
-        function showSuccessModal(total, cashReceived, change, paymentMethod, productCount) {
+        function showSuccessModal(total, cashReceived, change, paymentMethod, productCount, profit) {
             document.getElementById('successTotal').textContent = `${getCurrencySymbol()}${total.toFixed(2)}`;
             document.getElementById('successCashReceived').textContent = `${getCurrencySymbol()}${cashReceived.toFixed(2)}`;
             document.getElementById('successChange').textContent = `${getCurrencySymbol()}${change.toFixed(2)}`;
+            document.getElementById('successProfit').textContent = `${getCurrencySymbol()}${(profit || 0).toFixed(2)}`;
             document.getElementById('successPaymentMethod').textContent = 
                 paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1);
             document.getElementById('successProductCount').textContent = productCount;
@@ -3332,11 +3486,15 @@
         function saveProduct(e) {
             e.preventDefault();
             
+            const cost = parseFloat(document.getElementById('productCost').value) || 0;
+            const price = parseFloat(document.getElementById('productPrice').value) || 0;
+            
             const productData = {
                 id: editingProductId || Date.now().toString(),
                 name: document.getElementById('productName').value,
                 category: document.getElementById('productCategory').value,
-                price: parseFloat(document.getElementById('productPrice').value),
+                cost: cost,
+                price: price,
                 stock: parseInt(document.getElementById('productStock').value),
                 description: document.getElementById('productDescription').value,
                 createdAt: new Date().toISOString()
@@ -3345,10 +3503,10 @@
             if (editingProductId) {
                 const index = products.findIndex(p => p.id === editingProductId);
                 products[index] = productData;
-                addActivity('product_updated', `Producto actualizado: ${productData.name}`);
+                addActivity('product_updated', `Producto actualizado: ${productData.name} (Costo: ${getCurrencySymbol()}${cost} | Venta: ${getCurrencySymbol()}${price})`);
             } else {
                 products.push(productData);
-                addActivity('product_added', `Nuevo producto agregado: ${productData.name}`);
+                addActivity('product_added', `Nuevo producto agregado: ${productData.name} (Costo: ${getCurrencySymbol()}${cost} | Venta: ${getCurrencySymbol()}${price})`);
             }
             
             localStorage.setItem('gymProducts', JSON.stringify(products));
@@ -3365,9 +3523,13 @@
             document.getElementById('productModalTitle').textContent = 'Editar Producto';
             document.getElementById('productName').value = product.name;
             document.getElementById('productCategory').value = product.category;
+            document.getElementById('productCost').value = product.cost || 0;
             document.getElementById('productPrice').value = product.price;
             document.getElementById('productStock').value = product.stock;
             document.getElementById('productDescription').value = product.description || '';
+            
+            updateProductSymbols();
+            updateProductProfitPreview();
             
             document.getElementById('productModal').classList.remove('hidden');
             document.getElementById('productModal').classList.add('flex');
@@ -3419,7 +3581,7 @@
             if (filteredSales.length === 0) {
                 salesTable.innerHTML = `
                     <tr>
-                        <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
                             No hay ventas registradas
                         </td>
                     </tr>
@@ -3430,11 +3592,15 @@
             
             salesSummary.classList.remove('hidden');
             const totalAmount = filteredSales.reduce((sum, sale) => sum + sale.total, 0);
+            const totalCost = filteredSales.reduce((sum, sale) => sum + (sale.totalCost || 0), 0);
+            const totalProfit = filteredSales.reduce((sum, sale) => sum + (sale.totalProfit || 0), 0);
             const totalProducts = filteredSales.reduce((sum, sale) => 
                 sum + sale.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0);
             
             document.getElementById('summaryTotalSales').textContent = filteredSales.length;
             document.getElementById('summaryTotalAmount').textContent = `${getCurrencySymbol()}${totalAmount.toFixed(2)}`;
+            document.getElementById('summaryTotalCost').textContent = `${getCurrencySymbol()}${totalCost.toFixed(2)}`;
+            document.getElementById('summaryTotalProfit').textContent = `${getCurrencySymbol()}${totalProfit.toFixed(2)}`;
             document.getElementById('summaryTotalProducts').textContent = totalProducts;
             
             salesTable.innerHTML = filteredSales.slice().reverse().map(sale => {
@@ -3448,6 +3614,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDateTime(sale.date)}</td>
                         <td class="px-6 py-4 text-sm text-gray-500">${productsList}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${getCurrencySymbol()}${sale.total.toFixed(2)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">${getCurrencySymbol()}${(sale.totalProfit || 0).toFixed(2)}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             <span class="px-2 py-1 text-xs font-semibold rounded-full ${
                                 sale.paymentMethod === 'efectivo' ? 'bg-green-100 text-green-800' :
@@ -3528,6 +3695,9 @@
             const totalVentasPOS = ventasRango.reduce((sum, sale) => sum + sale.total, 0);
             const totalPagosMembresias = pagosRango.reduce((sum, payment) => sum + payment.amount, 0);
 
+            const costoVentasPOS = ventasRango.reduce((sum, sale) => sum + (sale.totalCost || 0), 0);
+            const gananciaPOS = totalVentasPOS - costoVentasPOS;
+
             const ingresosEfectivo = ventasRango
                 .filter(s => s.paymentMethod === 'efectivo')
                 .reduce((sum, s) => sum + s.total, 0);
@@ -3587,6 +3757,8 @@
                 cajaInicial,
                 totalVentasPOS,
                 totalPagosMembresias,
+                costoVentasPOS,
+                gananciaPOS,
                 ingresosEfectivo,
                 ingresosTarjeta,
                 ingresosTransferencia,
@@ -3604,6 +3776,10 @@
             document.getElementById('corteGanancia').textContent = `${symbol}${gananciaPeriodo.toFixed(2)}`;
             document.getElementById('corteTotalVentasPOS').textContent = `${symbol}${totalVentasPOS.toFixed(2)}`;
             document.getElementById('corteTotalPagosMembresias').textContent = `${symbol}${totalPagosMembresias.toFixed(2)}`;
+            
+            document.getElementById('corteVentasPOSIngreso').textContent = `${symbol}${totalVentasPOS.toFixed(2)}`;
+            document.getElementById('corteCostoPOS').textContent = `${symbol}${costoVentasPOS.toFixed(2)}`;
+            document.getElementById('corteGananciaPOS').textContent = `${symbol}${gananciaPOS.toFixed(2)}`;
 
             const tbody = document.getElementById('corteDetalleTable');
             if (movimientos.length === 0) {
@@ -3669,6 +3845,9 @@
             doc.text(`Total Ventas POS: ${data.symbol}${data.totalVentasPOS.toFixed(2)}`, 14, yPos);
             yPos += 6;
             doc.text(`Total Pagos Membresías: ${data.symbol}${data.totalPagosMembresias.toFixed(2)}`, 14, yPos);
+            yPos += 6;
+            doc.setTextColor(16, 185, 129);
+            doc.text(`Ganancia Bruta POS: ${data.symbol}${data.gananciaPOS.toFixed(2)}`, 14, yPos);
             yPos += 10;
 
             doc.setFontSize(11);
@@ -4244,6 +4423,8 @@
             
             const totalSales = salesData.length;
             const totalAmount = salesData.reduce((sum, sale) => sum + sale.total, 0);
+            const totalCost = salesData.reduce((sum, sale) => sum + (sale.totalCost || 0), 0);
+            const totalProfit = totalAmount - totalCost;
             const totalProducts = salesData.reduce((sum, sale) => 
                 sum + sale.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0);
             
@@ -4251,9 +4432,13 @@
             doc.setTextColor(31, 41, 55);
             doc.text(`Total de Ventas: ${totalSales}`, 14, 32);
             doc.text(`Monto Total: ${getCurrencySymbol()}${totalAmount.toFixed(2)}`, 14, 39);
-            doc.text(`Productos Vendidos: ${totalProducts}`, 14, 46);
+            doc.text(`Costo Total: ${getCurrencySymbol()}${totalCost.toFixed(2)}`, 14, 46);
+            doc.setTextColor(16, 185, 129);
+            doc.text(`Ganancia Total: ${getCurrencySymbol()}${totalProfit.toFixed(2)}`, 14, 53);
+            doc.setTextColor(31, 41, 55);
+            doc.text(`Productos Vendidos: ${totalProducts}`, 14, 60);
             
-            const headers = [["ID", "Fecha", "Productos", "Total", "Método"]];
+            const headers = [["ID", "Fecha", "Productos", "Total", "Ganancia", "Método"]];
             
             const tableData = salesData.map(sale => {
                 const productsList = sale.items.map(item => 
@@ -4265,6 +4450,7 @@
                     formatDate(sale.date),
                     productsList,
                     `${getCurrencySymbol()}${sale.total.toFixed(2)}`,
+                    `${getCurrencySymbol()}${(sale.totalProfit || 0).toFixed(2)}`,
                     sale.paymentMethod
                 ];
             });
@@ -4272,14 +4458,15 @@
             doc.autoTable({
                 head: headers,
                 body: tableData,
-                startY: 55,
+                startY: 67,
                 theme: 'grid',
                 styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
                 headStyles: { fillColor: [31, 41, 55], textColor: 255, fontStyle: 'bold' },
                 alternateRowStyles: { fillColor: [243, 244, 246] },
                 columnStyles: {
                     3: { cellWidth: 'auto', halign: 'right' },
-                    4: { cellWidth: 25 }
+                    4: { cellWidth: 'auto', halign: 'right' },
+                    5: { cellWidth: 25 }
                 }
             });
             
@@ -4309,7 +4496,12 @@
             document.getElementById('settingsTotalSales').textContent = sales.length;
             
             const salesRevenue = sales.reduce((total, sale) => total + sale.total, 0);
+            const totalCost = sales.reduce((total, sale) => total + (sale.totalCost || 0), 0);
+            const totalProfit = salesRevenue - totalCost;
+            
             document.getElementById('settingsSalesRevenue').textContent = `${getCurrencySymbol()}${salesRevenue.toFixed(2)}`;
+            document.getElementById('settingsCostRevenue').textContent = `${getCurrencySymbol()}${totalCost.toFixed(2)}`;
+            document.getElementById('settingsProfitRevenue').textContent = `${getCurrencySymbol()}${totalProfit.toFixed(2)}`;
             
             const productSales = {};
             sales.forEach(sale => {
@@ -4412,7 +4604,7 @@
             doc.setFontSize(10);
             doc.setTextColor(100, 100, 100);
             doc.text(`Generado: ${new Date().toLocaleString('es-MX')}`, 14, 22);
-            doc.text(`Versión: N.O.V.A v2.0`, 14, 28);
+            doc.text(`Versión: N.O.V.A v2.1`, 14, 28);
             
             doc.setFontSize(12);
             doc.setTextColor(31, 41, 55);
@@ -4423,6 +4615,8 @@
             const inactiveMembers = members.filter(m => getMemberStatus(m) === 'inactive').length;
             
             const salesRevenue = sales.reduce((total, sale) => total + sale.total, 0);
+            const salesCost = sales.reduce((total, sale) => total + (sale.totalCost || 0), 0);
+            const salesProfit = salesRevenue - salesCost;
             
             const stats = [
                 [`Total Socios:`, members.length],
@@ -4432,7 +4626,9 @@
                 [`Total Pagos:`, payments.length],
                 [`Total Productos:`, products.length],
                 [`Total Ventas:`, sales.length],
-                [`Ingresos por Ventas:`, `${getCurrencySymbol()}${salesRevenue.toFixed(2)}`]
+                [`Ingresos por Ventas:`, `${getCurrencySymbol()}${salesRevenue.toFixed(2)}`],
+                [`Costo Productos Vendidos:`, `${getCurrencySymbol()}${salesCost.toFixed(2)}`],
+                [`Ganancia Bruta Ventas:`, `${getCurrencySymbol()}${salesProfit.toFixed(2)}`]
             ];
             
             let yPosition = 50;
